@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="DevLogiq workspace dashboard">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+    <title>DevLogiq</title>
+</head>
+<body>
+    <div class="app-shell">
+        <aside class="sidebar">
+            <a class="brand" href="#" aria-label="DevLogiq home">
+                <span class="brand-mark" aria-hidden="true">D</span>
+                <span>DevLogiq</span>
+            </a>
+
+            <nav class="primary-nav" aria-label="Primary navigation">
+                <p class="nav-label">Workspace</p>
+                <a class="nav-link active" href="#dashboard" aria-current="page">
+                    <span class="nav-icon" aria-hidden="true">⌂</span>
+                    <span>Dashboard</span>
+                </a>
+                <a class="nav-link" href="#projects">
+                    <span class="nav-icon" aria-hidden="true">▦</span>
+                    <span>Projects</span>
+                </a>
+                <a class="nav-link" href="#tasks">
+                    <span class="nav-icon" aria-hidden="true">✓</span>
+                    <span>Tasks</span>
+                </a>
+                <a class="nav-link" href="#goals">
+                    <span class="nav-icon" aria-hidden="true">◎</span>
+                    <span>Goals</span>
+                </a>
+                <a class="nav-link" href="#notes">
+                    <span class="nav-icon" aria-hidden="true">▤</span>
+                    <span>Notes</span>
+                </a>
+                <a class="nav-link" href="#settings">
+                    <span class="nav-icon" aria-hidden="true">⚙</span>
+                    <span>Settings</span>
+                </a>
+            </nav>
+        </aside>
+
+        <main class="main-content" id="dashboard">
+            <header class="topbar">
+                <div>
+                    <p class="eyebrow" id="current-date"></p>
+                    <h1>Dashboard</h1>
+                </div>
+                <div class="topbar-actions">
+                    <button class="icon-button" type="button" aria-label="Search">⌕</button>
+                    <button class="icon-button notification-button" type="button" aria-label="Notifications">
+                        ♧<span class="notification-dot" aria-hidden="true"></span>
+                    </button>
+                    <span class="topbar-avatar" aria-hidden="true">JD</span>
+                </div>
+            </header>
+
+            <section class="welcome-panel" aria-labelledby="welcome-title">
+                <div>
+                    <p class="section-kicker">Your workspace</p>
+                    <h2 id="welcome-title">Good morning, Jordan<span class="accent-dot">.</span></h2>
+                    <p class="welcome-copy">Keep your ideas clear, your work moving, and your goals within reach.</p>
+                </div>
+                <div class="welcome-art" aria-hidden="true">
+                    <span class="art-line line-one"></span>
+                    <span class="art-line line-two"></span>
+                    <span class="art-orbit orbit-one"></span>
+                    <span class="art-orbit orbit-two"></span>
+                    <span class="art-star">✦</span>
+                </div>
+            </section>
+
+            <section class="section-heading" aria-labelledby="overview-title">
+                <div>
+                    <p class="section-kicker">Overview</p>
+                    <h2 id="overview-title">Your focus, at a glance</h2>
+                </div>
+                <button class="date-button" type="button">This week <span aria-hidden="true">⌄</span></button>
+            </section>
+
+            <section class="empty-overview" aria-label="Dashboard overview placeholder">
+                <div class="empty-icon" aria-hidden="true">✦</div>
+                <h3>Your dashboard is ready</h3>
+                <p>Stats, activity, and progress will appear here as you build your workspace.</p>
+            </section>
+        </main>
+    </div>
+
+    <script type="module" src="js/app.js"></script>
+</body>
+</html>
