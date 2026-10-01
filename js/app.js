@@ -15,6 +15,16 @@ const searchInput = document.querySelector('.project-filters input[type="search"
 const statusFilter = document.querySelector('[aria-label="Filter projects by status"]');
 const priorityFilter = document.querySelector('[aria-label="Filter projects by priority"]');
 const sortSelect = document.querySelector("#project-sort");
+const projectDetailsModal = document.querySelector("#project-details-modal");
+const projectDetailsTitle = document.querySelector("#project-details-title");
+const projectDetailsDescription = document.querySelector("#project-details-description");
+const projectDetailsStatus = document.querySelector("#project-details-status");
+const projectDetailsPriority = document.querySelector("#project-details-priority");
+const projectDetailsDeadline = document.querySelector("#project-details-deadline");
+const projectDetailsTechnologies = document.querySelector("#project-details-technologies");
+const editProjectDetailsButton = document.querySelector("#edit-project-details");
+const deleteProjectDetailsButton = document.querySelector("#delete-project-details");
+const closeProjectDetailsButton = document.querySelector("#close-project-details");
 
 let projects = loadProjects();
 let editingProjectID = null;
@@ -46,6 +56,22 @@ function setSidebarOpen(isOpen) {
 	sidebar.classList.toggle("is-open", isOpen);
 	sidebarBackdrop.hidden = !isOpen;
 	menuToggle.setAttribute("aria-expanded", String(isOpen));
+}
+
+function openProjectDetailsModal() {
+	if (typeof projectDetailsModal.showModal === "function") {
+		projectDetailsModal.showModal();
+	} else {
+		projectDetailsModal.setAttribute("open", "");
+	}
+}
+
+function closeProjectDetailsModal() {
+	if (typeof projectDetailsModal.close === "function") {
+		projectDetailsModal.close();
+	} else {
+		projectDetailsModal.removeAttribute("open");
+	}
 }
 
 navigationLinks.forEach((link) => {
@@ -114,6 +140,11 @@ function createProjectCard(project) {
 	editButton.classList.add("project-card-edit");
 	editButton.dataset.id = project.id;
 	editButton.textContent = "Edit";
+	const viewButton = document.createElement("button");
+	viewButton.type = "button";
+	viewButton.classList.add("project-card-view");
+	viewButton.dataset.projectId = project.id;
+	viewButton.textContent = "View Details";
 	const deleteButton = document.createElement("button");
 	deleteButton.type = "button";
 	deleteButton.classList.add("project-card-delete");
@@ -121,7 +152,7 @@ function createProjectCard(project) {
 	deleteButton.textContent = "Delete";
 	const projectActions = document.createElement("div");
 	projectActions.classList.add("project-card-actions");
-	projectActions.append(editButton, deleteButton);
+	projectActions.append(viewButton, editButton, deleteButton);
 
 	projectCard.append(
 		projectName,
@@ -243,6 +274,26 @@ function editProject(projectID) {
 	projectForm.elements.namedItem("name").focus();
 }
 
+function viewProject(projectID) {
+	const project = projects.find((project) => project.id === projectID);
+
+	if (!project) {
+		return;
+	}
+
+	projectDetailsTitle.textContent = project.name;
+	projectDetailsDescription.textContent = project.description || "No description";
+	projectDetailsStatus.textContent = project.status;
+	projectDetailsPriority.textContent = project.priority;
+	projectDetailsDeadline.textContent = project.deadline || "No deadline";
+	projectDetailsTechnologies.textContent = Array.isArray(project.technologies)
+		? project.technologies.join(", ")
+		: project.technologies || "None";
+	editProjectDetailsButton.dataset.projectId = project.id;
+	deleteProjectDetailsButton.dataset.projectId = project.id;
+	openProjectDetailsModal();
+}
+
 menuToggle.addEventListener("click", () => {
 	setSidebarOpen(!sidebar.classList.contains("is-open"));
 });
@@ -269,6 +320,22 @@ newProjectButton.addEventListener("click", () => {
 cancelProjectButton.addEventListener("click", () => {
 	resetProjectForm();
 	projectForm.hidden = true;
+});
+
+closeProjectDetailsButton.addEventListener("click", () => {
+	closeProjectDetailsModal();
+});
+
+editProjectDetailsButton.addEventListener("click", () => {
+	const projectID = editProjectDetailsButton.dataset.projectId;
+	closeProjectDetailsModal();
+	editProject(projectID);
+});
+
+deleteProjectDetailsButton.addEventListener("click", () => {
+	const projectID = deleteProjectDetailsButton.dataset.projectId;
+	closeProjectDetailsModal();
+	deleteProject(projectID);
 });
 
 projectForm.addEventListener("submit",(event)=>{
@@ -317,6 +384,10 @@ projectsContainer.addEventListener("click",(event)=>{
     }
 
 	const projectID = clickedButton.dataset.id;
+
+	if (clickedButton.classList.contains("project-card-view")) {
+		viewProject(clickedButton.dataset.projectId);
+	}
 
     if (clickedButton.classList.contains("project-card-delete")) {
         deleteProject(projectID);

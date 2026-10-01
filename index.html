@@ -192,6 +192,48 @@
         </main>
     </div>
 
+    <dialog class="project-details-modal" id="project-details-modal" aria-labelledby="project-details-title">
+        <div class="project-details-content">
+            <header class="project-details-header">
+                <div>
+                    <p class="section-kicker">Project details</p>
+                    <h2 id="project-details-title"></h2>
+                </div>
+            </header>
+            <dl class="project-details-grid">
+                <div class="project-details-description">
+                    <dt>Description</dt>
+                    <dd id="project-details-description"></dd>
+                </div>
+                <div>
+                    <dt>Status</dt>
+                    <dd id="project-details-status"></dd>
+                </div>
+                <div>
+                    <dt>Priority</dt>
+                    <dd id="project-details-priority"></dd>
+                </div>
+                <div>
+                    <dt>Deadline</dt>
+                    <dd id="project-details-deadline"></dd>
+                </div>
+                <div class="project-details-technologies">
+                    <dt>Technologies</dt>
+                    <dd id="project-details-technologies"></dd>
+                </div>
+                <div>
+                    <dt>Progress</dt>
+                    <dd id="project-details-progress">0%</dd>
+                </div>
+            </dl>
+            <div class="project-details-actions">
+                <button class="project-details-edit" id="edit-project-details" type="button">Edit</button>
+                <button class="project-details-delete" id="delete-project-details" type="button">Delete</button>
+                <button class="project-details-close" id="close-project-details" type="button">Close</button>
+            </div>
+        </div>
+    </dialog>
+
     <script type="module" src="js/app.js"></script>
 </body>
 </html>
