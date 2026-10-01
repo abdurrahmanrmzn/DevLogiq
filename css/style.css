@@ -381,7 +381,7 @@ a {
 
 .project-filters {
 	display: grid;
-	grid-template-columns: minmax(200px, 1fr) 170px 170px;
+	grid-template-columns: minmax(200px, 1fr) repeat(3, minmax(0, 150px));
 	gap: 12px;
 	margin-top: 35px;
 	padding: 15px;
@@ -649,7 +649,7 @@ a {
 	}
 
 	.project-filters {
-		grid-template-columns: repeat(2, minmax(0, 1fr));
+		grid-template-columns: repeat(3, minmax(0, 150px));
 	}
 
 	.search-field {

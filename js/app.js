@@ -14,6 +14,7 @@ const projectsContainer = document.querySelector("#projects-container");
 const searchInput = document.querySelector('.project-filters input[type="search"]');
 const statusFilter = document.querySelector('[aria-label="Filter projects by status"]');
 const priorityFilter = document.querySelector('[aria-label="Filter projects by priority"]');
+const sortSelect = document.querySelector("#project-sort");
 
 let projects = loadProjects();
 let editingProjectID = null;
@@ -152,6 +153,18 @@ function renderProjects(projectsToRender){
 	});
 }
 
+function compareDeadlines(leftProject, rightProject, direction) {
+	if (!leftProject.deadline) {
+		return rightProject.deadline ? 1 : 0;
+	}
+
+	if (!rightProject.deadline) {
+		return -1;
+	}
+
+	return leftProject.deadline.localeCompare(rightProject.deadline) * direction;
+}
+
 function filterProjects() {
 	const searchTerm = searchInput.value.toLowerCase();
 	const selectedStatus = statusFilter.value;
@@ -167,7 +180,33 @@ function filterProjects() {
 		return matchesSearch && matchesStatus && matchesPriority;
 	});
 
-	renderProjects(filteredProjects);
+	const sortedProjects = [...filteredProjects];
+	const sortOrder = sortSelect.value;
+
+	if (sortOrder === "name-asc") {
+		sortedProjects.sort((leftProject, rightProject) =>
+			leftProject.name.localeCompare(rightProject.name)
+		);
+	} else if (sortOrder === "name-desc") {
+		sortedProjects.sort((leftProject, rightProject) =>
+			rightProject.name.localeCompare(leftProject.name)
+		);
+	} else if (sortOrder === "deadline-asc") {
+		sortedProjects.sort((leftProject, rightProject) =>
+			compareDeadlines(leftProject, rightProject, 1)
+		);
+	} else if (sortOrder === "deadline-desc") {
+		sortedProjects.sort((leftProject, rightProject) =>
+			compareDeadlines(leftProject, rightProject, -1)
+		);
+	} else if (sortOrder === "priority") {
+		const priorityOrder = { High: 0, Medium: 1, Low: 2 };
+		sortedProjects.sort((leftProject, rightProject) =>
+			(priorityOrder[leftProject.priority] ?? 3) - (priorityOrder[rightProject.priority] ?? 3)
+		);
+	}
+
+	renderProjects(sortedProjects);
 }
 
 function deleteProject(projectID) {
@@ -268,6 +307,7 @@ projectForm.addEventListener("submit",(event)=>{
 searchInput.addEventListener("input", filterProjects);
 statusFilter.addEventListener("change", filterProjects);
 priorityFilter.addEventListener("change", filterProjects);
+sortSelect.addEventListener("change", filterProjects);
 
 projectsContainer.addEventListener("click",(event)=>{
 	const clickedButton = event.target.closest("button");

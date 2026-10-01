@@ -125,6 +125,17 @@
                             <option>High</option>
                         </select>
                     </label>
+                    <label class="filter-field">
+                        <span>Sort</span>
+                        <select id="project-sort" aria-label="Sort projects">
+                            <option value="">Sort by</option>
+                            <option value="name-asc">Name: A → Z</option>
+                            <option value="name-desc">Name: Z → A</option>
+                            <option value="deadline-asc">Deadline: Earliest</option>
+                            <option value="deadline-desc">Deadline: Latest</option>
+                            <option value="priority">Priority</option>
+                        </select>
+                    </label>
                 </div>
 
                 <form class="project-form" id="project-form" hidden>
