@@ -12,7 +12,8 @@
 </head>
 <body>
     <div class="app-shell">
-        <aside class="sidebar">
+        <aside class="sidebar" id="sidebar">
+            <button class="sidebar-close" id="sidebar-close" type="button" aria-label="Close navigation">&times;</button>
             <a class="brand" href="#" aria-label="DevLogiq home">
                 <span class="brand-mark" aria-hidden="true">D</span>
                 <span>DevLogiq</span>
@@ -20,11 +21,11 @@
 
             <nav class="primary-nav" aria-label="Primary navigation">
                 <p class="nav-label">Workspace</p>
-                <a class="nav-link active" href="#dashboard" aria-current="page">
+                <a class="nav-link active" href="#dashboard" aria-current="page" data-view="dashboard">
                     <span class="nav-icon" aria-hidden="true">⌂</span>
                     <span>Dashboard</span>
                 </a>
-                <a class="nav-link" href="#projects">
+                <a class="nav-link" href="#projects" data-view="projects">
                     <span class="nav-icon" aria-hidden="true">▦</span>
                     <span>Projects</span>
                 </a>
@@ -46,12 +47,17 @@
                 </a>
             </nav>
         </aside>
+        <button class="menu-toggle" id="menu-toggle" type="button" aria-label="Open navigation" aria-controls="sidebar" aria-expanded="false">
+            <span aria-hidden="true">&#9776;</span>
+        </button>
+        <div class="sidebar-backdrop" id="sidebar-backdrop" hidden></div>
 
-        <main class="main-content" id="dashboard">
-            <header class="topbar">
+        <main class="main-content">
+            <section id="dashboard" class="view-section" aria-labelledby="dashboard-title">
+                <header class="topbar">
                 <div>
                     <p class="eyebrow" id="current-date"></p>
-                    <h1>Dashboard</h1>
+                    <h1 id="dashboard-title">Dashboard</h1>
                 </div>
                 <div class="topbar-actions">
                     <button class="icon-button" type="button" aria-label="Search">⌕</button>
@@ -60,35 +66,117 @@
                     </button>
                     <span class="topbar-avatar" aria-hidden="true">JD</span>
                 </div>
-            </header>
+                </header>
 
-            <section class="welcome-panel" aria-labelledby="welcome-title">
+                <section class="welcome-panel" aria-labelledby="welcome-title">
                 <div>
                     <p class="section-kicker">Your workspace</p>
                     <h2 id="welcome-title">Good morning, Jordan<span class="accent-dot">.</span></h2>
                     <p class="welcome-copy">Keep your ideas clear, your work moving, and your goals within reach.</p>
                 </div>
-                <div class="welcome-art" aria-hidden="true">
-                    <span class="art-line line-one"></span>
-                    <span class="art-line line-two"></span>
-                    <span class="art-orbit orbit-one"></span>
-                    <span class="art-orbit orbit-two"></span>
-                    <span class="art-star">✦</span>
-                </div>
-            </section>
+                </section>
 
-            <section class="section-heading" aria-labelledby="overview-title">
+                <section class="section-heading" aria-labelledby="overview-title">
                 <div>
                     <p class="section-kicker">Overview</p>
                     <h2 id="overview-title">Your focus, at a glance</h2>
                 </div>
                 <button class="date-button" type="button">This week <span aria-hidden="true">⌄</span></button>
-            </section>
+                </section>
 
-            <section class="empty-overview" aria-label="Dashboard overview placeholder">
+                <section class="empty-overview" aria-label="Dashboard overview placeholder">
                 <div class="empty-icon" aria-hidden="true">✦</div>
                 <h3>Your dashboard is ready</h3>
                 <p>Stats, activity, and progress will appear here as you build your workspace.</p>
+                </section>
+            </section>
+
+            <section id="projects" class="view-section projects-view" aria-labelledby="projects-title" hidden>
+                <header class="projects-header">
+                    <div>
+                        <p class="section-kicker">Workspace</p>
+                        <h1 id="projects-title">Projects</h1>
+                        <p class="projects-description">Organize your work and keep every build moving forward.</p>
+                    </div>
+                    <button class="primary-button" id="new-project-button" type="button">+ New Project</button>
+                </header>
+
+                <div class="project-filters" aria-label="Project search and filters">
+                    <label class="search-field">
+                        <span class="sr-only">Search projects</span>
+                        <span aria-hidden="true">⌕</span>
+                        <input type="search" placeholder="Search projects" aria-label="Search projects">
+                    </label>
+                    <label class="filter-field">
+                        <span>Status</span>
+                        <select aria-label="Filter projects by status">
+                            <option value="">All statuses</option>
+                            <option>Planning</option>
+                            <option>Active</option>
+                            <option>Completed</option>
+                        </select>
+                    </label>
+                    <label class="filter-field">
+                        <span>Priority</span>
+                        <select aria-label="Filter projects by priority">
+                            <option value="">All priorities</option>
+                            <option>Low</option>
+                            <option>Medium</option>
+                            <option>High</option>
+                        </select>
+                    </label>
+                </div>
+
+                <form class="project-form" id="project-form" hidden>
+                    <div class="form-heading">
+                        <div>
+                            <p class="section-kicker">Project details</p>
+                            <h2>Create a project</h2>
+                        </div>
+                    </div>
+                    <div class="form-grid">
+                        <label class="form-field form-field-wide" for="project-name">
+                            <span>Project Name</span>
+                            <input type="text" id="project-name" name="name" required>
+                        </label>
+                        <label class="form-field form-field-wide" for="project-description">
+                            <span>Description</span>
+                            <textarea id="project-description" name="description" rows="3"></textarea>
+                        </label>
+                        <label class="form-field" for="project-status">
+                            <span>Status</span>
+                            <select id="project-status" name="status">
+                                <option>Planning</option>
+                                <option>Active</option>
+                                <option>Completed</option>
+                            </select>
+                        </label>
+                        <label class="form-field" for="project-priority">
+                            <span>Priority</span>
+                            <select id="project-priority" name="priority">
+                                <option>Low</option>
+                                <option selected>Medium</option>
+                                <option>High</option>
+                            </select>
+                        </label>
+                        <label class="form-field" for="project-deadline">
+                            <span>Deadline</span>
+                            <input type="date" id="project-deadline" name="deadline">
+                        </label>
+                        <label class="form-field" for="project-technologies">
+                            <span>Technologies</span>
+                            <input type="text" id="project-technologies" name="technologies" placeholder="HTML, CSS, JavaScript">
+                        </label>
+                    </div>
+                    <div class="form-actions">
+                        <button class="secondary-button" id="cancel-project-button" type="button">Cancel</button>
+                        <button class="primary-button" id="save-project-button" type="submit">Save Project</button>
+                    </div>
+                </form>
+
+                <div class="projects-container" id="projects-container">
+                  
+                </div>
             </section>
         </main>
     </div>
