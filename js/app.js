@@ -1,4 +1,4 @@
-import { saveProjects , loadProjects} from "./data/storage.js";
+import { saveProjects, loadProjects, saveTasks, loadTasks } from "./data/storage.js";
 
 const navigationLinks = document.querySelectorAll("[data-view]");
 const viewSections = document.querySelectorAll(".view-section");
@@ -25,14 +25,35 @@ const projectDetailsTechnologies = document.querySelector("#project-details-tech
 const editProjectDetailsButton = document.querySelector("#edit-project-details");
 const deleteProjectDetailsButton = document.querySelector("#delete-project-details");
 const closeProjectDetailsButton = document.querySelector("#close-project-details");
+const newTaskButton = document.querySelector("#new-task-button");
+const taskForm = document.querySelector("#task-form");
+const taskFormTitle = document.querySelector("#task-form-title");
+const taskProjectSelect = document.querySelector("#task-project");
+const cancelTaskButton = document.querySelector("#cancel-task-button");
+const saveTaskButton = document.querySelector("#save-task-button");
+const taskSearchInput = document.querySelector("#task-search");
+const taskStatusFilter = document.querySelector("#task-status-filter");
+const taskPriorityFilter = document.querySelector("#task-priority-filter");
+const taskProjectFilter = document.querySelector("#task-project-filter");
+const taskSortSelect = document.querySelector("#task-sort");
+const tasksContainer = document.querySelector("#tasks-container");
 
 let projects = loadProjects();
 let editingProjectID = null;
+let tasks = loadTasks();
+let editingTaskId = null;
 
 function resetProjectForm() {
 	projectForm.reset();
 	editingProjectID = null;
 	saveProjectButton.textContent = "Save Project";
+}
+
+function resetTaskForm() {
+	taskForm.reset();
+	editingTaskId = null;
+	taskFormTitle.textContent = "Create a task";
+	saveTaskButton.textContent = "Save Task";
 }
 
 function showView(viewName) {
@@ -79,6 +100,11 @@ navigationLinks.forEach((link) => {
 		event.preventDefault();
 		showView(link.dataset.view);
 		setSidebarOpen(false);
+
+		if (link.dataset.view === "tasks") {
+			populateTaskProjectOptions();
+			filterTasks();
+		}
 	});
 });
 
@@ -294,6 +320,203 @@ function viewProject(projectID) {
 	openProjectDetailsModal();
 }
 
+function populateTaskProjectOptions() {
+	const selectedProjectId = taskProjectSelect.value;
+	const selectedFilterProjectId = taskProjectFilter.value;
+	taskProjectSelect.replaceChildren();
+	taskProjectFilter.replaceChildren();
+
+	const unassignedOption = document.createElement("option");
+	unassignedOption.value = "";
+	unassignedOption.textContent = projects.length ? "No project" : "No projects available";
+	taskProjectSelect.append(unassignedOption);
+
+	const allProjectsOption = document.createElement("option");
+	allProjectsOption.value = "";
+	allProjectsOption.textContent = "All projects";
+	taskProjectFilter.append(allProjectsOption);
+
+	projects.forEach((project) => {
+		const formOption = document.createElement("option");
+		formOption.value = project.id;
+		formOption.textContent = project.name;
+		taskProjectSelect.append(formOption);
+
+		const filterOption = document.createElement("option");
+		filterOption.value = project.id;
+		filterOption.textContent = project.name;
+		taskProjectFilter.append(filterOption);
+	});
+
+	if (projects.some((project) => project.id === selectedProjectId)) {
+		taskProjectSelect.value = selectedProjectId;
+	}
+
+	if (projects.some((project) => project.id === selectedFilterProjectId)) {
+		taskProjectFilter.value = selectedFilterProjectId;
+	}
+}
+
+function createTask(task) {
+	return {
+		id: crypto.randomUUID(),
+		projectId: task.projectId,
+		title: task.title,
+		description: task.description,
+		status: task.status,
+		priority: task.priority,
+		dueDate: task.dueDate,
+		createdAt: new Date().toISOString()
+	};
+}
+
+function createTaskCard(task) {
+	const project = projects.find((project) => project.id === task.projectId);
+	const taskCard = document.createElement("article");
+	taskCard.classList.add("task-card");
+
+	const taskTitle = document.createElement("h3");
+	taskTitle.textContent = task.title;
+	const taskDescription = document.createElement("p");
+	taskDescription.classList.add("task-card-description");
+	taskDescription.textContent = task.description || "No description";
+	const taskProjectName = document.createElement("p");
+	taskProjectName.classList.add("task-card-project");
+	taskProjectName.textContent = `Project: ${project?.name ?? "Unknown Project"}`;
+	const taskStatus = document.createElement("p");
+	taskStatus.classList.add("task-card-status");
+	taskStatus.textContent = `Status: ${task.status}`;
+	const taskPriority = document.createElement("p");
+	taskPriority.classList.add("task-card-priority");
+	taskPriority.textContent = `Priority: ${task.priority}`;
+	const taskDueDate = document.createElement("p");
+	taskDueDate.classList.add("task-card-due-date");
+	taskDueDate.textContent = `Due: ${task.dueDate || "No due date"}`;
+
+	const taskMetadata = document.createElement("div");
+	taskMetadata.classList.add("task-card-metadata");
+	taskMetadata.append(taskStatus, taskPriority, taskDueDate);
+
+	const editButton = document.createElement("button");
+	editButton.type = "button";
+	editButton.classList.add("task-card-edit");
+	editButton.dataset.taskId = task.id;
+	editButton.textContent = "Edit";
+	const deleteButton = document.createElement("button");
+	deleteButton.type = "button";
+	deleteButton.classList.add("task-card-delete");
+	deleteButton.dataset.taskId = task.id;
+	deleteButton.textContent = "Delete";
+	const taskActions = document.createElement("div");
+	taskActions.classList.add("task-card-actions");
+	taskActions.append(editButton, deleteButton);
+
+	taskCard.append(taskTitle, taskDescription, taskProjectName, taskMetadata, taskActions);
+	return taskCard;
+}
+
+function renderTasks(tasksToRender) {
+	tasksContainer.innerHTML = "";
+
+	if (tasksToRender.length === 0) {
+		tasksContainer.innerHTML = `
+			<div class="tasks-empty-state">
+				<div class="empty-icon" aria-hidden="true">✓</div>
+				<h2>No tasks found</h2>
+				<p>Create a task or adjust your search and filters.</p>
+			</div>`;
+		return;
+	}
+
+	tasksToRender.forEach((task) => {
+		tasksContainer.appendChild(createTaskCard(task));
+	});
+}
+
+function compareTaskDueDates(leftTask, rightTask, direction) {
+	if (!leftTask.dueDate) {
+		return rightTask.dueDate ? 1 : 0;
+	}
+
+	if (!rightTask.dueDate) {
+		return -1;
+	}
+
+	return leftTask.dueDate.localeCompare(rightTask.dueDate) * direction;
+}
+
+function filterTasks() {
+	const searchTerm = taskSearchInput.value.toLowerCase();
+	let filteredTasks = tasks.filter((task) =>
+		`${task.title} ${task.description}`.toLowerCase().includes(searchTerm)
+	);
+
+	if (taskStatusFilter.value) {
+		filteredTasks = filteredTasks.filter((task) => task.status === taskStatusFilter.value);
+	}
+
+	if (taskPriorityFilter.value) {
+		filteredTasks = filteredTasks.filter((task) => task.priority === taskPriorityFilter.value);
+	}
+
+	if (taskProjectFilter.value) {
+		filteredTasks = filteredTasks.filter((task) => task.projectId === taskProjectFilter.value);
+	}
+
+	const sortedTasks = [...filteredTasks];
+	const sortOrder = taskSortSelect.value;
+
+	if (sortOrder === "title-asc") {
+		sortedTasks.sort((leftTask, rightTask) => leftTask.title.localeCompare(rightTask.title));
+	} else if (sortOrder === "title-desc") {
+		sortedTasks.sort((leftTask, rightTask) => rightTask.title.localeCompare(leftTask.title));
+	} else if (sortOrder === "dueDate-asc") {
+		sortedTasks.sort((leftTask, rightTask) => compareTaskDueDates(leftTask, rightTask, 1));
+	} else if (sortOrder === "dueDate-desc") {
+		sortedTasks.sort((leftTask, rightTask) => compareTaskDueDates(leftTask, rightTask, -1));
+	} else if (sortOrder === "priority") {
+		const priorityOrder = { High: 0, Medium: 1, Low: 2 };
+		sortedTasks.sort((leftTask, rightTask) =>
+			(priorityOrder[leftTask.priority] ?? 3) - (priorityOrder[rightTask.priority] ?? 3)
+		);
+	}
+
+	renderTasks(sortedTasks);
+}
+
+function deleteTask(taskId) {
+	const taskExists = tasks.some((task) => task.id === taskId);
+
+	if (!taskExists) {
+		return;
+	}
+
+	tasks = tasks.filter((task) => task.id !== taskId);
+	saveTasks(tasks);
+	filterTasks();
+}
+
+function editTask(taskId) {
+	const task = tasks.find((task) => task.id === taskId);
+
+	if (!task) {
+		return;
+	}
+
+	populateTaskProjectOptions();
+	taskForm.elements.namedItem("title").value = task.title;
+	taskForm.elements.namedItem("description").value = task.description;
+	taskProjectSelect.value = task.projectId;
+	taskForm.elements.namedItem("status").value = task.status;
+	taskForm.elements.namedItem("priority").value = task.priority;
+	taskForm.elements.namedItem("dueDate").value = task.dueDate;
+	editingTaskId = task.id;
+	taskFormTitle.textContent = "Edit task";
+	saveTaskButton.textContent = "Update Task";
+	taskForm.hidden = false;
+	taskForm.elements.namedItem("title").focus();
+}
+
 menuToggle.addEventListener("click", () => {
 	setSidebarOpen(!sidebar.classList.contains("is-open"));
 });
@@ -371,10 +594,69 @@ projectForm.addEventListener("submit",(event)=>{
 	resetProjectForm();
 });
 
+newTaskButton.addEventListener("click", () => {
+	resetTaskForm();
+	populateTaskProjectOptions();
+	taskForm.hidden = false;
+	taskForm.elements.namedItem("title").focus();
+});
+
+cancelTaskButton.addEventListener("click", () => {
+	resetTaskForm();
+	taskForm.hidden = true;
+});
+
+taskForm.addEventListener("submit", (event) => {
+	event.preventDefault();
+
+	const formProps = Object.fromEntries(new FormData(taskForm));
+
+	if (editingTaskId) {
+		const taskIndex = tasks.findIndex((task) => task.id === editingTaskId);
+
+		if (taskIndex === -1) {
+			resetTaskForm();
+			return;
+		}
+
+		tasks[taskIndex] = { ...tasks[taskIndex], ...formProps };
+	} else {
+		tasks.push(createTask(formProps));
+	}
+
+	saveTasks(tasks);
+	filterTasks();
+	resetTaskForm();
+});
+
 searchInput.addEventListener("input", filterProjects);
 statusFilter.addEventListener("change", filterProjects);
 priorityFilter.addEventListener("change", filterProjects);
 sortSelect.addEventListener("change", filterProjects);
+
+taskSearchInput.addEventListener("input", filterTasks);
+taskStatusFilter.addEventListener("change", filterTasks);
+taskPriorityFilter.addEventListener("change", filterTasks);
+taskProjectFilter.addEventListener("change", filterTasks);
+taskSortSelect.addEventListener("change", filterTasks);
+
+tasksContainer.addEventListener("click", (event) => {
+	const clickedButton = event.target.closest("button");
+
+	if (!clickedButton) {
+		return;
+	}
+
+	const taskId = clickedButton.dataset.taskId;
+
+	if (clickedButton.classList.contains("task-card-edit")) {
+		editTask(taskId);
+	}
+
+	if (clickedButton.classList.contains("task-card-delete")) {
+		deleteTask(taskId);
+	}
+});
 
 projectsContainer.addEventListener("click",(event)=>{
 	const clickedButton = event.target.closest("button");
@@ -398,4 +680,6 @@ projectsContainer.addEventListener("click",(event)=>{
     }
 })
 
+populateTaskProjectOptions();
+filterTasks();
 filterProjects();

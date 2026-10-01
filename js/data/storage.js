@@ -11,6 +11,18 @@ function loadProjects() {
     return projectsJSON ? JSON.parse(projectsJSON) : [];
 }
 
+function saveTasks(tasks) {
+    localStorage.setItem(
+        "devlogiq_tasks",
+        JSON.stringify(tasks)
+    );
+}
+
+function loadTasks() {
+    const tasksJSON = localStorage.getItem("devlogiq_tasks");
+
+    return tasksJSON ? JSON.parse(tasksJSON) : [];
+}
 
 
-export { saveProjects, loadProjects };
+export { saveProjects, loadProjects, saveTasks, loadTasks };

@@ -29,7 +29,7 @@
                     <span class="nav-icon" aria-hidden="true">▦</span>
                     <span>Projects</span>
                 </a>
-                <a class="nav-link" href="#tasks">
+                <a class="nav-link" href="#tasks" data-view="tasks">
                     <span class="nav-icon" aria-hidden="true">✓</span>
                     <span>Tasks</span>
                 </a>
@@ -188,6 +188,111 @@
                 <div class="projects-container" id="projects-container">
                   
                 </div>
+            </section>
+
+            <section id="tasks" class="view-section tasks-view" aria-labelledby="tasks-title" hidden>
+                <header class="projects-header tasks-header">
+                    <div>
+                        <p class="section-kicker">Workspace</p>
+                        <h1 id="tasks-title">Tasks</h1>
+                        <p class="projects-description">Keep the next steps for every project moving.</p>
+                    </div>
+                    <button class="primary-button" id="new-task-button" type="button">+ New Task</button>
+                </header>
+
+                <div class="task-filters" aria-label="Task search and filters">
+                    <label class="task-search">
+                        <span class="sr-only">Search tasks</span>
+                        <span aria-hidden="true">⌕</span>
+                        <input id="task-search" type="search" placeholder="Search tasks" aria-label="Search tasks">
+                    </label>
+                    <label class="filter-field">
+                        <span>Status</span>
+                        <select id="task-status-filter" aria-label="Filter tasks by status">
+                            <option value="">All statuses</option>
+                            <option>Todo</option>
+                            <option>In Progress</option>
+                            <option>Done</option>
+                        </select>
+                    </label>
+                    <label class="filter-field">
+                        <span>Priority</span>
+                        <select id="task-priority-filter" aria-label="Filter tasks by priority">
+                            <option value="">All priorities</option>
+                            <option>Low</option>
+                            <option>Medium</option>
+                            <option>High</option>
+                        </select>
+                    </label>
+                    <label class="filter-field">
+                        <span>Project</span>
+                        <select id="task-project-filter" aria-label="Filter tasks by project">
+                            <option value="">All projects</option>
+                        </select>
+                    </label>
+                    <label class="filter-field">
+                        <span>Sort</span>
+                        <select id="task-sort" aria-label="Sort tasks">
+                            <option value="">Default</option>
+                            <option value="title-asc">Title: A → Z</option>
+                            <option value="title-desc">Title: Z → A</option>
+                            <option value="dueDate-asc">Due Date: Earliest</option>
+                            <option value="dueDate-desc">Due Date: Latest</option>
+                            <option value="priority">Priority</option>
+                        </select>
+                    </label>
+                </div>
+
+                <form class="project-form task-form" id="task-form" hidden>
+                    <div class="form-heading">
+                        <div>
+                            <p class="section-kicker">Task details</p>
+                            <h2 id="task-form-title">Create a task</h2>
+                        </div>
+                    </div>
+                    <div class="form-grid">
+                        <label class="form-field form-field-wide" for="task-title">
+                            <span>Title</span>
+                            <input type="text" id="task-title" name="title" required>
+                        </label>
+                        <label class="form-field form-field-wide" for="task-description">
+                            <span>Description</span>
+                            <textarea id="task-description" name="description" rows="3"></textarea>
+                        </label>
+                        <label class="form-field" for="task-project">
+                            <span>Project</span>
+                            <select id="task-project" name="projectId">
+                                <option value="">No projects available</option>
+                            </select>
+                        </label>
+                        <label class="form-field" for="task-status">
+                            <span>Status</span>
+                            <select id="task-status" name="status">
+                                <option>Todo</option>
+                                <option>In Progress</option>
+                                <option>Done</option>
+                            </select>
+                        </label>
+                        <label class="form-field" for="task-priority">
+                            <span>Priority</span>
+                            <select id="task-priority" name="priority">
+                                <option>Low</option>
+                                <option selected>Medium</option>
+                                <option>High</option>
+                            </select>
+                        </label>
+                        <label class="form-field" for="task-due-date">
+                            <span>Due Date</span>
+                            <input type="date" id="task-due-date" name="dueDate">
+                        </label>
+                    </div>
+                    <div class="form-actions">
+                        <button class="secondary-button" id="cancel-task-button" type="button">Cancel</button>
+                        <button class="primary-button" id="save-task-button" type="submit">Save Task</button>
+                    </div>
+                </form>
+
+                <div class="tasks-container" id="tasks-container"></div>
             </section>
         </main>
     </div>
