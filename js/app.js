@@ -5,13 +5,24 @@ const viewSections = document.querySelectorAll(".view-section");
 const newProjectButton = document.querySelector("#new-project-button");
 const cancelProjectButton = document.querySelector("#cancel-project-button");
 const projectForm = document.querySelector("#project-form");
+const saveProjectButton = document.querySelector("#save-project-button");
 const sidebar = document.querySelector("#sidebar");
 const menuToggle = document.querySelector("#menu-toggle");
 const sidebarClose = document.querySelector("#sidebar-close");
 const sidebarBackdrop = document.querySelector("#sidebar-backdrop");
 const projectsContainer = document.querySelector("#projects-container");
+const searchInput = document.querySelector('.project-filters input[type="search"]');
+const statusFilter = document.querySelector('[aria-label="Filter projects by status"]');
+const priorityFilter = document.querySelector('[aria-label="Filter projects by priority"]');
 
 let projects = loadProjects();
+let editingProjectID = null;
+
+function resetProjectForm() {
+	projectForm.reset();
+	editingProjectID = null;
+	saveProjectButton.textContent = "Save Project";
+}
 
 function showView(viewName) {
 	viewSections.forEach((section) => {
@@ -100,10 +111,12 @@ function createProjectCard(project) {
 	const editButton = document.createElement("button");
 	editButton.type = "button";
 	editButton.classList.add("project-card-edit");
+	editButton.dataset.id = project.id;
 	editButton.textContent = "Edit";
 	const deleteButton = document.createElement("button");
 	deleteButton.type = "button";
 	deleteButton.classList.add("project-card-delete");
+	deleteButton.dataset.id = project.id;
 	deleteButton.textContent = "Delete";
 	const projectActions = document.createElement("div");
 	projectActions.classList.add("project-card-actions");
@@ -139,6 +152,58 @@ function renderProjects(projectsToRender){
 	});
 }
 
+function filterProjects() {
+	const searchTerm = searchInput.value.toLowerCase();
+	const selectedStatus = statusFilter.value;
+	const selectedPriority = priorityFilter.value;
+
+	const filteredProjects = projects.filter((project) => {
+		const matchesSearch = `${project.name} ${project.description}`
+			.toLowerCase()
+			.includes(searchTerm);
+		const matchesStatus = !selectedStatus || project.status === selectedStatus;
+		const matchesPriority = !selectedPriority || project.priority === selectedPriority;
+
+		return matchesSearch && matchesStatus && matchesPriority;
+	});
+
+	renderProjects(filteredProjects);
+}
+
+function deleteProject(projectID) {
+	const projectIndex = projects.findIndex((project) => project.id === projectID);
+
+	if (projectIndex === -1) {
+		return;
+	}
+
+	projects.splice(projectIndex, 1);
+	saveProjects(projects);
+	filterProjects();
+}
+
+function editProject(projectID) {
+	const project = projects.find((project) => project.id === projectID);
+
+	if (!project) {
+		return;
+	}
+
+	projectForm.elements.namedItem("name").value = project.name;
+	projectForm.elements.namedItem("description").value = project.description;
+	projectForm.elements.namedItem("status").value = project.status;
+	projectForm.elements.namedItem("priority").value = project.priority;
+	projectForm.elements.namedItem("deadline").value = project.deadline;
+	projectForm.elements.namedItem("technologies").value = Array.isArray(project.technologies)
+		? project.technologies.join(", ")
+		: project.technologies;
+	editingProjectID = project.id;
+	saveProjectButton.textContent = "Update Project";
+
+	projectForm.hidden = false;
+	projectForm.elements.namedItem("name").focus();
+}
+
 menuToggle.addEventListener("click", () => {
 	setSidebarOpen(!sidebar.classList.contains("is-open"));
 });
@@ -157,11 +222,13 @@ document.addEventListener("keydown", (event) => {
 	}
 });
 newProjectButton.addEventListener("click", () => {
+	resetProjectForm();
 	projectForm.hidden = false;
 	projectForm.querySelector("input").focus();
 });
 
 cancelProjectButton.addEventListener("click", () => {
+	resetProjectForm();
 	projectForm.hidden = true;
 });
 
@@ -174,17 +241,50 @@ projectForm.addEventListener("submit",(event)=>{
     const formProps = Object.fromEntries(formData);
 	
 
-	const newProject = createProject(formProps);
+	if (editingProjectID) {
+		const projectIndex = projects.findIndex((project) => project.id === editingProjectID);
 
-	projects.push(newProject);
+		if (projectIndex === -1) {
+			resetProjectForm();
+			return;
+		}
 
-	
+		projects[projectIndex] = {
+			...projects[projectIndex],
+			...formProps,
+			technologies: formProps.technologies.split(/,\s*/)
+		};
+	} else {
+		projects.push(createProject(formProps));
+	}
 
 	saveProjects(projects);
 
-	renderProjects(projects);
+	filterProjects();
 	
-	projectForm.reset();
+	resetProjectForm();
 });
 
-renderProjects(projects);
+searchInput.addEventListener("input", filterProjects);
+statusFilter.addEventListener("change", filterProjects);
+priorityFilter.addEventListener("change", filterProjects);
+
+projectsContainer.addEventListener("click",(event)=>{
+	const clickedButton = event.target.closest("button");
+
+    if (!clickedButton) {
+        return;
+    }
+
+	const projectID = clickedButton.dataset.id;
+
+    if (clickedButton.classList.contains("project-card-delete")) {
+        deleteProject(projectID);
+    }
+
+     if (clickedButton.classList.contains("project-card-edit")) {
+        editProject(projectID);
+    }
+})
+
+filterProjects();
