@@ -33,7 +33,7 @@
                     <span class="nav-icon" aria-hidden="true">✓</span>
                     <span>Tasks</span>
                 </a>
-                <a class="nav-link" href="#goals">
+                <a class="nav-link" href="#goals" data-view="goals">
                     <span class="nav-icon" aria-hidden="true">◎</span>
                     <span>Goals</span>
                 </a>
@@ -293,6 +293,93 @@
                 </form>
 
                 <div class="tasks-container" id="tasks-container"></div>
+            </section>
+
+            <section id="goals" class="view-section goals-view" aria-labelledby="goals-title" hidden>
+                <header class="projects-header">
+                    <div>
+                        <p class="section-kicker">Workspace</p>
+                        <h1 id="goals-title">Learning Goals</h1>
+                        <p class="projects-description">Build skills steadily, one goal at a time.</p>
+                    </div>
+                    <button class="primary-button" id="new-goal-button" type="button">+ New Goal</button>
+                </header>
+
+                <div class="goal-filters" aria-label="Goal search and filters">
+                    <label class="task-search">
+                        <span class="sr-only">Search goals</span>
+                        <span aria-hidden="true">⌕</span>
+                        <input id="goal-search" type="search" placeholder="Search goals" aria-label="Search goals">
+                    </label>
+                    <label class="filter-field">
+                        <span>Status</span>
+                        <select id="goal-status-filter" aria-label="Filter goals by status">
+                            <option value="">All</option>
+                            <option>Not Started</option>
+                            <option>In Progress</option>
+                            <option>Completed</option>
+                        </select>
+                    </label>
+                    <label class="filter-field">
+                        <span>Category</span>
+                        <select id="goal-category-filter" aria-label="Filter goals by category">
+                            <option value="">All categories</option>
+                        </select>
+                    </label>
+                    <label class="filter-field">
+                        <span>Sort</span>
+                        <select id="goal-sort" aria-label="Sort goals">
+                            <option value="">Default</option>
+                            <option value="title-asc">Title A-Z</option>
+                            <option value="title-desc">Title Z-A</option>
+                            <option value="progress-asc">Progress Low-High</option>
+                            <option value="progress-desc">Progress High-Low</option>
+                            <option value="targetDate-asc">Target Date Earliest</option>
+                            <option value="targetDate-desc">Target Date Latest</option>
+                        </select>
+                    </label>
+                </div>
+
+                <form class="project-form goals-form" id="goal-form" hidden>
+                    <div class="form-heading">
+                        <div>
+                            <p class="section-kicker">Goal details</p>
+                            <h2 id="goal-form-title">Create a goal</h2>
+                        </div>
+                    </div>
+                    <div class="form-grid">
+                        <label class="form-field" for="goal-title">
+                            <span>Title</span>
+                            <input type="text" id="goal-title" name="title" required>
+                        </label>
+                        <label class="form-field" for="goal-category">
+                            <span>Category</span>
+                            <input type="text" id="goal-category" name="category" required>
+                        </label>
+                        <label class="form-field" for="goal-progress">
+                            <span>Progress <output id="goal-progress-value" for="goal-progress">0%</output></span>
+                            <input type="range" id="goal-progress" name="progress" min="0" max="100" value="0">
+                        </label>
+                        <label class="form-field" for="goal-target-date">
+                            <span>Target Date</span>
+                            <input type="date" id="goal-target-date" name="targetDate">
+                        </label>
+                        <label class="form-field" for="goal-status">
+                            <span>Status</span>
+                            <select id="goal-status" name="status">
+                                <option>Not Started</option>
+                                <option>In Progress</option>
+                                <option>Completed</option>
+                            </select>
+                        </label>
+                    </div>
+                    <div class="form-actions">
+                        <button class="secondary-button" id="cancel-goal-button" type="button">Cancel</button>
+                        <button class="primary-button" id="save-goal-button" type="submit">Save Goal</button>
+                    </div>
+                </form>
+
+                <div class="goals-container" id="goals-container"></div>
             </section>
         </main>
     </div>

@@ -1,4 +1,4 @@
-import { saveProjects, loadProjects, saveTasks, loadTasks } from "./data/storage.js";
+import { saveProjects, loadProjects, saveTasks, loadTasks, saveGoals, loadGoals } from "./data/storage.js";
 
 const navigationLinks = document.querySelectorAll("[data-view]");
 const viewSections = document.querySelectorAll(".view-section");
@@ -22,6 +22,7 @@ const projectDetailsStatus = document.querySelector("#project-details-status");
 const projectDetailsPriority = document.querySelector("#project-details-priority");
 const projectDetailsDeadline = document.querySelector("#project-details-deadline");
 const projectDetailsTechnologies = document.querySelector("#project-details-technologies");
+const projectDetailsProgress = document.querySelector("#project-details-progress");
 const editProjectDetailsButton = document.querySelector("#edit-project-details");
 const deleteProjectDetailsButton = document.querySelector("#delete-project-details");
 const closeProjectDetailsButton = document.querySelector("#close-project-details");
@@ -37,11 +38,44 @@ const taskPriorityFilter = document.querySelector("#task-priority-filter");
 const taskProjectFilter = document.querySelector("#task-project-filter");
 const taskSortSelect = document.querySelector("#task-sort");
 const tasksContainer = document.querySelector("#tasks-container");
+const newGoalButton = document.querySelector("#new-goal-button");
+const goalForm = document.querySelector("#goal-form");
+const goalFormTitle = document.querySelector("#goal-form-title");
+const goalTitleInput = document.querySelector("#goal-title");
+const goalProgressInput = document.querySelector("#goal-progress");
+const goalProgressValue = document.querySelector("#goal-progress-value");
+const goalStatusSelect = document.querySelector("#goal-status");
+const cancelGoalButton = document.querySelector("#cancel-goal-button");
+const saveGoalButton = document.querySelector("#save-goal-button");
+const goalSearchInput = document.querySelector("#goal-search");
+const goalStatusFilter = document.querySelector("#goal-status-filter");
+const goalCategoryFilter = document.querySelector("#goal-category-filter");
+const goalSortSelect = document.querySelector("#goal-sort");
+const goalsContainer = document.querySelector("#goals-container");
 
 let projects = loadProjects();
 let editingProjectID = null;
 let tasks = loadTasks();
 let editingTaskId = null;
+const storedGoals = loadGoals();
+let goals = storedGoals.filter((goal) => goal && typeof goal === "object").map((goal) => ({
+	...goal,
+	id: typeof goal.id === "string" ? goal.id : "",
+	title: typeof goal.title === "string" ? goal.title : "",
+	category: typeof goal.category === "string" ? goal.category : "",
+	progress: Math.min(100, Math.max(0, Number.isFinite(Number(goal.progress)) ? Number(goal.progress) : 0)),
+	targetDate: typeof goal.targetDate === "string" ? goal.targetDate : "",
+	status: ["Not Started", "In Progress", "Completed"].includes(goal.status) ? goal.status : "Not Started",
+	createdAt: typeof goal.createdAt === "string" ? goal.createdAt : ""
+})).filter((goal) => goal.id.length > 0).map((goal) => ({
+	...goal,
+	status: goal.progress === 100 ? "Completed" : goal.status
+}));
+let editingGoalId = null;
+
+if (goals.length !== storedGoals.length) {
+	saveGoals(goals);
+}
 
 function resetProjectForm() {
 	projectForm.reset();
@@ -54,6 +88,15 @@ function resetTaskForm() {
 	editingTaskId = null;
 	taskFormTitle.textContent = "Create a task";
 	saveTaskButton.textContent = "Save Task";
+}
+
+function resetGoalForm() {
+	goalForm.reset();
+	goalProgressValue.value = "0%";
+	goalProgressValue.textContent = "0%";
+	editingGoalId = null;
+	goalFormTitle.textContent = "Create a goal";
+	saveGoalButton.textContent = "Save Goal";
 }
 
 function showView(viewName) {
@@ -104,6 +147,10 @@ navigationLinks.forEach((link) => {
 		if (link.dataset.view === "tasks") {
 			populateTaskProjectOptions();
 			filterTasks();
+		}
+
+		if (link.dataset.view === "goals") {
+			filterGoals();
 		}
 	});
 });
@@ -315,9 +362,20 @@ function viewProject(projectID) {
 	projectDetailsTechnologies.textContent = Array.isArray(project.technologies)
 		? project.technologies.join(", ")
 		: project.technologies || "None";
+	projectDetailsProgress.textContent = `${calculateProjectProgress(project.id)}%`;
 	editProjectDetailsButton.dataset.projectId = project.id;
 	deleteProjectDetailsButton.dataset.projectId = project.id;
 	openProjectDetailsModal();
+}
+
+function calculateProjectProgress(projectId) {
+	const projectTasks = tasks.filter((task) => task.projectId === projectId);
+	if (projectTasks.length === 0) {
+		return 0;
+	}
+
+	const completedTasks = projectTasks.filter((task) => task.status === "Done").length;
+	return Math.round((completedTasks / projectTasks.length) * 100);
 }
 
 function populateTaskProjectOptions() {
@@ -484,6 +542,211 @@ function filterTasks() {
 	renderTasks(sortedTasks);
 }
 
+function createGoal(goal) {
+	const progress = Math.min(100, Math.max(0, Number(goal.progress) || 0));
+	return {
+		id: crypto.randomUUID(),
+		title: String(goal.title || "").trim(),
+		category: String(goal.category || "").trim(),
+		progress,
+		targetDate: goal.targetDate || "",
+		status: progress === 100 ? "Completed" : goal.status,
+		createdAt: new Date().toISOString()
+	};
+}
+
+function createGoalCard(goal) {
+	const goalCard = document.createElement("article");
+	goalCard.classList.add("goal-card");
+
+	const title = document.createElement("h3");
+	title.textContent = goal.title || "Untitled goal";
+	const category = document.createElement("p");
+	category.classList.add("goal-card-category");
+	category.textContent = `Category: ${goal.category || "Uncategorized"}`;
+
+	const progress = Math.min(100, Math.max(0, Number(goal.progress) || 0));
+	const progressLabel = document.createElement("div");
+	progressLabel.classList.add("goal-card-progress-label");
+	const progressText = document.createElement("span");
+	progressText.textContent = "Progress";
+	const progressPercent = document.createElement("span");
+	progressPercent.textContent = `${progress}%`;
+	progressLabel.append(progressText, progressPercent);
+	const progressTrack = document.createElement("div");
+	progressTrack.classList.add("goal-card-progress-track");
+	progressTrack.setAttribute("role", "progressbar");
+	progressTrack.setAttribute("aria-label", `Progress for ${goal.title || "goal"}`);
+	progressTrack.setAttribute("aria-valuemin", "0");
+	progressTrack.setAttribute("aria-valuemax", "100");
+	progressTrack.setAttribute("aria-valuenow", String(progress));
+	const progressBar = document.createElement("span");
+	progressBar.style.width = `${progress}%`;
+	progressTrack.append(progressBar);
+	const progressSection = document.createElement("div");
+	progressSection.classList.add("goal-card-progress");
+	progressSection.append(progressLabel, progressTrack);
+
+	const metadata = document.createElement("div");
+	metadata.classList.add("goal-card-metadata");
+	const status = document.createElement("p");
+	status.classList.add("goal-card-status");
+	status.textContent = goal.status || "Not Started";
+	const targetDate = document.createElement("p");
+	targetDate.classList.add("goal-card-target-date");
+	targetDate.textContent = goal.targetDate ? `Target: ${goal.targetDate}` : "No target date";
+	metadata.append(status, targetDate);
+
+	const actions = document.createElement("div");
+	actions.classList.add("goal-card-actions");
+	const editButton = document.createElement("button");
+	editButton.type = "button";
+	editButton.classList.add("goal-card-edit");
+	editButton.dataset.goalId = goal.id;
+	editButton.textContent = "Edit";
+	const deleteButton = document.createElement("button");
+	deleteButton.type = "button";
+	deleteButton.classList.add("goal-card-delete");
+	deleteButton.dataset.goalId = goal.id;
+	deleteButton.textContent = "Delete";
+	actions.append(editButton, deleteButton);
+
+	goalCard.append(title, category, progressSection, metadata, actions);
+	return goalCard;
+}
+
+function renderGoals(goalsToRender) {
+	goalsContainer.replaceChildren();
+
+	if (goalsToRender.length === 0) {
+		const emptyState = document.createElement("div");
+		emptyState.classList.add("goals-empty-state");
+		const icon = document.createElement("div");
+		icon.classList.add("empty-icon");
+		icon.setAttribute("aria-hidden", "true");
+		icon.textContent = "◎";
+		const heading = document.createElement("h2");
+		const description = document.createElement("p");
+		if (goals.length === 0) {
+			heading.textContent = "No learning goals yet";
+			description.textContent = "Add a goal to start tracking your learning progress.";
+		} else {
+			heading.textContent = "No goals found";
+			description.textContent = "Try changing your search or filters.";
+		}
+		emptyState.append(icon, heading, description);
+		goalsContainer.append(emptyState);
+		return;
+	}
+
+	goalsToRender.forEach((goal) => goalsContainer.append(createGoalCard(goal)));
+}
+
+function compareGoalTargetDates(leftGoal, rightGoal, direction) {
+	const leftDate = Date.parse(leftGoal.targetDate || "");
+	const rightDate = Date.parse(rightGoal.targetDate || "");
+	const leftHasDate = Number.isFinite(leftDate);
+	const rightHasDate = Number.isFinite(rightDate);
+
+	if (!leftHasDate) {
+		return rightHasDate ? 1 : 0;
+	}
+
+	if (!rightHasDate) {
+		return -1;
+	}
+
+	return (leftDate - rightDate) * direction;
+}
+
+function updateGoalCategoryOptions() {
+	const selectedCategory = goalCategoryFilter.value;
+	const categories = [...new Set(goals.map((goal) => goal.category.trim()).filter(Boolean))]
+		.sort((leftCategory, rightCategory) => leftCategory.localeCompare(rightCategory));
+	goalCategoryFilter.replaceChildren();
+	const allOption = document.createElement("option");
+	allOption.value = "";
+	allOption.textContent = "All categories";
+	goalCategoryFilter.append(allOption);
+
+	categories.forEach((category) => {
+		const option = document.createElement("option");
+		option.value = category;
+		option.textContent = category;
+		goalCategoryFilter.append(option);
+	});
+
+	if (categories.includes(selectedCategory)) {
+		goalCategoryFilter.value = selectedCategory;
+	}
+}
+
+function filterGoals() {
+	updateGoalCategoryOptions();
+	const searchTerm = goalSearchInput.value.trim().toLowerCase();
+	const selectedStatus = goalStatusFilter.value;
+	const selectedCategory = goalCategoryFilter.value;
+	let filteredGoals = goals.filter((goal) =>
+		`${goal.title} ${goal.category}`.toLowerCase().includes(searchTerm)
+	);
+
+	if (selectedStatus) {
+		filteredGoals = filteredGoals.filter((goal) => goal.status === selectedStatus);
+	}
+
+	if (selectedCategory) {
+		filteredGoals = filteredGoals.filter((goal) => goal.category === selectedCategory);
+	}
+
+	const sortedGoals = [...filteredGoals];
+	const sortOrder = goalSortSelect.value;
+	if (sortOrder === "title-asc") {
+		sortedGoals.sort((leftGoal, rightGoal) => leftGoal.title.localeCompare(rightGoal.title));
+	} else if (sortOrder === "title-desc") {
+		sortedGoals.sort((leftGoal, rightGoal) => rightGoal.title.localeCompare(leftGoal.title));
+	} else if (sortOrder === "progress-asc") {
+		sortedGoals.sort((leftGoal, rightGoal) => leftGoal.progress - rightGoal.progress);
+	} else if (sortOrder === "progress-desc") {
+		sortedGoals.sort((leftGoal, rightGoal) => rightGoal.progress - leftGoal.progress);
+	} else if (sortOrder === "targetDate-asc") {
+		sortedGoals.sort((leftGoal, rightGoal) => compareGoalTargetDates(leftGoal, rightGoal, 1));
+	} else if (sortOrder === "targetDate-desc") {
+		sortedGoals.sort((leftGoal, rightGoal) => compareGoalTargetDates(leftGoal, rightGoal, -1));
+	}
+
+	renderGoals(sortedGoals);
+}
+
+function deleteGoal(goalId) {
+	if (!goals.some((goal) => goal.id === goalId)) {
+		return;
+	}
+
+	goals = goals.filter((goal) => goal.id !== goalId);
+	saveGoals(goals);
+	filterGoals();
+}
+
+function editGoal(goalId) {
+	const goal = goals.find((item) => item.id === goalId);
+	if (!goal) {
+		return;
+	}
+
+	goalForm.elements.namedItem("title").value = goal.title;
+	goalForm.elements.namedItem("category").value = goal.category;
+	goalProgressInput.value = String(goal.progress);
+	goalProgressValue.value = `${goal.progress}%`;
+	goalProgressValue.textContent = `${goal.progress}%`;
+	goalForm.elements.namedItem("targetDate").value = goal.targetDate;
+	goalStatusSelect.value = goal.status;
+	editingGoalId = goal.id;
+	goalFormTitle.textContent = "Edit goal";
+	saveGoalButton.textContent = "Update Goal";
+	goalForm.hidden = false;
+	goalTitleInput.focus();
+}
+
 function deleteTask(taskId) {
 	const taskExists = tasks.some((task) => task.id === taskId);
 
@@ -629,6 +892,57 @@ taskForm.addEventListener("submit", (event) => {
 	resetTaskForm();
 });
 
+newGoalButton.addEventListener("click", () => {
+	resetGoalForm();
+	goalForm.hidden = false;
+	goalTitleInput.focus();
+});
+
+cancelGoalButton.addEventListener("click", () => {
+	resetGoalForm();
+	goalForm.hidden = true;
+});
+
+goalProgressInput.addEventListener("input", () => {
+	const progress = Math.min(100, Math.max(0, Number(goalProgressInput.value) || 0));
+	goalProgressValue.value = `${progress}%`;
+	goalProgressValue.textContent = `${progress}%`;
+	if (progress === 100) {
+		goalStatusSelect.value = "Completed";
+	}
+});
+
+goalForm.addEventListener("submit", (event) => {
+	event.preventDefault();
+	const formProps = Object.fromEntries(new FormData(goalForm));
+	formProps.title = String(formProps.title || "").trim();
+	formProps.category = String(formProps.category || "").trim();
+	formProps.progress = Math.min(100, Math.max(0, Number(formProps.progress) || 0));
+	if (!formProps.title || !formProps.category) {
+		return;
+	}
+	if (formProps.progress === 100) {
+		formProps.status = "Completed";
+	}
+
+	if (editingGoalId) {
+		const goalIndex = goals.findIndex((goal) => goal.id === editingGoalId);
+		if (goalIndex === -1) {
+			resetGoalForm();
+			goalForm.hidden = true;
+			return;
+		}
+		goals[goalIndex] = { ...goals[goalIndex], ...formProps };
+	} else {
+		goals.push(createGoal(formProps));
+	}
+
+	saveGoals(goals);
+	filterGoals();
+	resetGoalForm();
+	goalForm.hidden = true;
+});
+
 searchInput.addEventListener("input", filterProjects);
 statusFilter.addEventListener("change", filterProjects);
 priorityFilter.addEventListener("change", filterProjects);
@@ -639,6 +953,11 @@ taskStatusFilter.addEventListener("change", filterTasks);
 taskPriorityFilter.addEventListener("change", filterTasks);
 taskProjectFilter.addEventListener("change", filterTasks);
 taskSortSelect.addEventListener("change", filterTasks);
+
+goalSearchInput.addEventListener("input", filterGoals);
+goalStatusFilter.addEventListener("change", filterGoals);
+goalCategoryFilter.addEventListener("change", filterGoals);
+goalSortSelect.addEventListener("change", filterGoals);
 
 tasksContainer.addEventListener("click", (event) => {
 	const clickedButton = event.target.closest("button");
@@ -680,6 +999,23 @@ projectsContainer.addEventListener("click",(event)=>{
     }
 })
 
+goalsContainer.addEventListener("click", (event) => {
+	const clickedButton = event.target.closest("button");
+	if (!clickedButton || !goalsContainer.contains(clickedButton)) {
+		return;
+	}
+
+	const goalId = clickedButton.dataset.goalId;
+	if (clickedButton.classList.contains("goal-card-edit")) {
+		editGoal(goalId);
+	}
+
+	if (clickedButton.classList.contains("goal-card-delete")) {
+		deleteGoal(goalId);
+	}
+});
+
 populateTaskProjectOptions();
 filterTasks();
 filterProjects();
+filterGoals();

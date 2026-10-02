@@ -24,5 +24,27 @@ function loadTasks() {
     return tasksJSON ? JSON.parse(tasksJSON) : [];
 }
 
+function saveGoals(goals) {
+    localStorage.setItem(
+        "devlogiq_goals",
+        JSON.stringify(goals)
+    );
+}
 
-export { saveProjects, loadProjects, saveTasks, loadTasks };
+function loadGoals() {
+    const goalsJSON = localStorage.getItem("devlogiq_goals");
+
+    if (!goalsJSON) {
+        return [];
+    }
+
+    try {
+        const goals = JSON.parse(goalsJSON);
+        return Array.isArray(goals) ? goals : [];
+    } catch {
+        return [];
+    }
+}
+
+
+export { saveProjects, loadProjects, saveTasks, loadTasks, saveGoals, loadGoals };
