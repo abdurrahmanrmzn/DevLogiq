@@ -1,4 +1,4 @@
-import { saveProjects, loadProjects, saveTasks, loadTasks, saveGoals, loadGoals } from "./data/storage.js";
+import { saveProjects, loadProjects, saveTasks, loadTasks, saveGoals, loadGoals, saveNotes, loadNotes } from "./data/storage.js";
 
 const navigationLinks = document.querySelectorAll("[data-view]");
 const viewSections = document.querySelectorAll(".view-section");
@@ -52,6 +52,16 @@ const goalStatusFilter = document.querySelector("#goal-status-filter");
 const goalCategoryFilter = document.querySelector("#goal-category-filter");
 const goalSortSelect = document.querySelector("#goal-sort");
 const goalsContainer = document.querySelector("#goals-container");
+const newNoteButton = document.querySelector("#new-note-button");
+const noteForm = document.querySelector("#note-form");
+const noteFormTitle = document.querySelector("#note-form-title");
+const noteTitleInput = document.querySelector("#note-title");
+const noteContentInput = document.querySelector("#note-content");
+const noteProjectSelect = document.querySelector("#note-project");
+const cancelNoteButton = document.querySelector("#cancel-note-button");
+const saveNoteButton = document.querySelector("#save-note-button");
+const noteSearchInput = document.querySelector("#note-search");
+const notesContainer = document.querySelector("#notes-container");
 
 let projects = loadProjects();
 let editingProjectID = null;
@@ -76,6 +86,8 @@ let editingGoalId = null;
 if (goals.length !== storedGoals.length) {
 	saveGoals(goals);
 }
+let notes = loadNotes().filter((note) => note && typeof note === "object");
+let editingNoteId = null;
 
 function resetProjectForm() {
 	projectForm.reset();
@@ -97,6 +109,13 @@ function resetGoalForm() {
 	editingGoalId = null;
 	goalFormTitle.textContent = "Create a goal";
 	saveGoalButton.textContent = "Save Goal";
+}
+
+function resetNoteForm() {
+	noteForm.reset();
+	editingNoteId = null;
+	noteFormTitle.textContent = "Create a note";
+	saveNoteButton.textContent = "Save Note";
 }
 
 function showView(viewName) {
@@ -151,6 +170,11 @@ navigationLinks.forEach((link) => {
 
 		if (link.dataset.view === "goals") {
 			filterGoals();
+		}
+
+		if (link.dataset.view === "notes") {
+			populateNoteProjectOptions();
+			filterNotes();
 		}
 	});
 });
@@ -717,6 +741,157 @@ function filterGoals() {
 	renderGoals(sortedGoals);
 }
 
+function createNote(note) {
+	const timestamp = new Date().toISOString();
+	return {
+		id: crypto.randomUUID(),
+		title: String(note.title || "").trim(),
+		content: String(note.content || "").trim(),
+		projectId: note.projectId || null,
+		createdAt: timestamp,
+		updatedAt: timestamp
+	};
+}
+
+function formatNoteDate(value) {
+	const date = new Date(value);
+	return Number.isNaN(date.getTime()) ? "Unknown" : date.toLocaleString();
+}
+
+function createNoteCard(note) {
+	const noteCard = document.createElement("article");
+	noteCard.classList.add("note-card");
+
+	const title = document.createElement("h3");
+	title.textContent = note.title || "Untitled note";
+	const content = document.createElement("p");
+	content.classList.add("note-card-content");
+	const noteContent = String(note.content || "No content");
+	content.textContent = noteContent.length > 240
+		? `${noteContent.slice(0, 237)}...`
+		: noteContent;
+
+	const relatedProject = document.createElement("p");
+	relatedProject.classList.add("note-card-project");
+	if (!note.projectId) {
+		relatedProject.textContent = "No related project";
+	} else {
+		const project = projects.find((item) => item.id === note.projectId);
+		relatedProject.textContent = `Project: ${project?.name ?? "Unknown Project"}`;
+	}
+
+	const timestamps = document.createElement("div");
+	timestamps.classList.add("note-card-timestamps");
+	const createdAt = document.createElement("p");
+	createdAt.textContent = `Created: ${formatNoteDate(note.createdAt)}`;
+	const updatedAt = document.createElement("p");
+	updatedAt.textContent = `Updated: ${formatNoteDate(note.updatedAt)}`;
+	timestamps.append(createdAt, updatedAt);
+
+	const actions = document.createElement("div");
+	actions.classList.add("note-card-actions");
+	const editButton = document.createElement("button");
+	editButton.type = "button";
+	editButton.classList.add("note-card-edit");
+	editButton.dataset.noteId = note.id || "";
+	editButton.textContent = "Edit";
+	const deleteButton = document.createElement("button");
+	deleteButton.type = "button";
+	deleteButton.classList.add("note-card-delete");
+	deleteButton.dataset.noteId = note.id || "";
+	deleteButton.textContent = "Delete";
+	actions.append(editButton, deleteButton);
+
+	noteCard.append(title, content, relatedProject, timestamps, actions);
+	return noteCard;
+}
+
+function renderNotes(notesToRender) {
+	notesContainer.replaceChildren();
+
+	if (notesToRender.length === 0) {
+		const emptyState = document.createElement("div");
+		emptyState.classList.add("notes-empty-state");
+		const icon = document.createElement("div");
+		icon.classList.add("empty-icon");
+		icon.setAttribute("aria-hidden", "true");
+		icon.textContent = "▤";
+		const heading = document.createElement("h2");
+		const description = document.createElement("p");
+		if (notes.length === 0) {
+			heading.textContent = "No notes yet";
+			description.textContent = "Create a note to keep useful information close at hand.";
+		} else {
+			heading.textContent = "No notes found";
+			description.textContent = "Try a different search term.";
+		}
+		emptyState.append(icon, heading, description);
+		notesContainer.append(emptyState);
+		return;
+	}
+
+	notesToRender.forEach((note) => notesContainer.append(createNoteCard(note)));
+}
+
+function filterNotes() {
+	const searchTerm = noteSearchInput.value.trim().toLowerCase();
+	const filteredNotes = notes.filter((note) =>
+		`${note.title || ""} ${note.content || ""}`.toLowerCase().includes(searchTerm)
+	);
+	renderNotes(filteredNotes);
+}
+
+function populateNoteProjectOptions(selectedProjectId = noteProjectSelect.value) {
+	noteProjectSelect.replaceChildren();
+	const noProjectOption = document.createElement("option");
+	noProjectOption.value = "";
+	noProjectOption.textContent = "No project";
+	noteProjectSelect.append(noProjectOption);
+
+	projects.forEach((project) => {
+		const option = document.createElement("option");
+		option.value = project.id;
+		option.textContent = project.name;
+		noteProjectSelect.append(option);
+	});
+
+	if (selectedProjectId && !projects.some((project) => project.id === selectedProjectId)) {
+		const unknownProjectOption = document.createElement("option");
+		unknownProjectOption.value = selectedProjectId;
+		unknownProjectOption.textContent = "Unknown Project";
+		noteProjectSelect.append(unknownProjectOption);
+	}
+
+	noteProjectSelect.value = selectedProjectId || "";
+}
+
+function editNote(noteId) {
+	const note = notes.find((item) => item.id === noteId);
+	if (!note) {
+		return;
+	}
+
+	populateNoteProjectOptions(note.projectId);
+	noteTitleInput.value = note.title || "";
+	noteContentInput.value = note.content || "";
+	noteProjectSelect.value = note.projectId || "";
+	editingNoteId = note.id;
+	noteFormTitle.textContent = "Edit note";
+	saveNoteButton.textContent = "Update Note";
+	noteForm.hidden = false;
+	noteTitleInput.focus();
+}
+
+function deleteNote(noteId) {
+	if (!notes.some((note) => note.id === noteId)) {
+		return;
+	}
+
+	notes = notes.filter((note) => note.id !== noteId);
+	saveNotes(notes);
+	filterNotes();
+}
+
 function deleteGoal(goalId) {
 	if (!goals.some((goal) => goal.id === goalId)) {
 		return;
@@ -943,6 +1118,50 @@ goalForm.addEventListener("submit", (event) => {
 	goalForm.hidden = true;
 });
 
+newNoteButton.addEventListener("click", () => {
+	resetNoteForm();
+	populateNoteProjectOptions();
+	noteForm.hidden = false;
+	noteTitleInput.focus();
+});
+
+cancelNoteButton.addEventListener("click", () => {
+	resetNoteForm();
+	noteForm.hidden = true;
+});
+
+noteForm.addEventListener("submit", (event) => {
+	event.preventDefault();
+	const formProps = Object.fromEntries(new FormData(noteForm));
+	formProps.title = String(formProps.title || "").trim();
+	formProps.content = String(formProps.content || "").trim();
+	formProps.projectId = formProps.projectId || null;
+	if (!formProps.title || !formProps.content) {
+		return;
+	}
+
+	if (editingNoteId) {
+		const noteIndex = notes.findIndex((note) => note.id === editingNoteId);
+		if (noteIndex === -1) {
+			resetNoteForm();
+			noteForm.hidden = true;
+			return;
+		}
+		notes[noteIndex] = {
+			...notes[noteIndex],
+			...formProps,
+			updatedAt: new Date().toISOString()
+		};
+	} else {
+		notes.push(createNote(formProps));
+	}
+
+	saveNotes(notes);
+	filterNotes();
+	resetNoteForm();
+	noteForm.hidden = true;
+});
+
 searchInput.addEventListener("input", filterProjects);
 statusFilter.addEventListener("change", filterProjects);
 priorityFilter.addEventListener("change", filterProjects);
@@ -958,6 +1177,8 @@ goalSearchInput.addEventListener("input", filterGoals);
 goalStatusFilter.addEventListener("change", filterGoals);
 goalCategoryFilter.addEventListener("change", filterGoals);
 goalSortSelect.addEventListener("change", filterGoals);
+
+noteSearchInput.addEventListener("input", filterNotes);
 
 tasksContainer.addEventListener("click", (event) => {
 	const clickedButton = event.target.closest("button");
@@ -1015,7 +1236,25 @@ goalsContainer.addEventListener("click", (event) => {
 	}
 });
 
+notesContainer.addEventListener("click", (event) => {
+	const clickedButton = event.target.closest("button");
+	if (!clickedButton || !notesContainer.contains(clickedButton)) {
+		return;
+	}
+
+	const noteId = clickedButton.dataset.noteId;
+	if (clickedButton.classList.contains("note-card-edit")) {
+		editNote(noteId);
+	}
+
+	if (clickedButton.classList.contains("note-card-delete")) {
+		deleteNote(noteId);
+	}
+});
+
 populateTaskProjectOptions();
 filterTasks();
 filterProjects();
 filterGoals();
+populateNoteProjectOptions();
+filterNotes();

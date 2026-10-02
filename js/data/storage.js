@@ -46,5 +46,27 @@ function loadGoals() {
     }
 }
 
+function saveNotes(notes) {
+    localStorage.setItem(
+        "devlogiq_notes",
+        JSON.stringify(notes)
+    );
+}
 
-export { saveProjects, loadProjects, saveTasks, loadTasks, saveGoals, loadGoals };
+function loadNotes() {
+    const notesJSON = localStorage.getItem("devlogiq_notes");
+
+    if (!notesJSON) {
+        return [];
+    }
+
+    try {
+        const notes = JSON.parse(notesJSON);
+        return Array.isArray(notes) ? notes : [];
+    } catch {
+        return [];
+    }
+}
+
+
+export { saveProjects, loadProjects, saveTasks, loadTasks, saveGoals, loadGoals, saveNotes, loadNotes };

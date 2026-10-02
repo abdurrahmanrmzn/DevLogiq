@@ -37,7 +37,7 @@
                     <span class="nav-icon" aria-hidden="true">◎</span>
                     <span>Goals</span>
                 </a>
-                <a class="nav-link" href="#notes">
+                <a class="nav-link" href="#notes" data-view="notes">
                     <span class="nav-icon" aria-hidden="true">▤</span>
                     <span>Notes</span>
                 </a>
@@ -380,6 +380,56 @@
                 </form>
 
                 <div class="goals-container" id="goals-container"></div>
+            </section>
+
+            <section id="notes" class="view-section notes-view" aria-labelledby="notes-title" hidden>
+                <header class="projects-header">
+                    <div>
+                        <p class="section-kicker">Workspace</p>
+                        <h1 id="notes-title">Notes</h1>
+                        <p class="projects-description">Keep useful thoughts and project details close at hand.</p>
+                    </div>
+                    <button class="primary-button" id="new-note-button" type="button">+ New Note</button>
+                </header>
+
+                <div class="notes-filters" aria-label="Note search">
+                    <label class="task-search">
+                        <span class="sr-only">Search notes</span>
+                        <span aria-hidden="true">⌕</span>
+                        <input id="note-search" type="search" placeholder="Search notes" aria-label="Search notes">
+                    </label>
+                </div>
+
+                <form class="project-form note-form" id="note-form" hidden>
+                    <div class="form-heading">
+                        <div>
+                            <p class="section-kicker">Note details</p>
+                            <h2 id="note-form-title">Create a note</h2>
+                        </div>
+                    </div>
+                    <div class="form-grid">
+                        <label class="form-field form-field-wide" for="note-title">
+                            <span>Title</span>
+                            <input type="text" id="note-title" name="title" required>
+                        </label>
+                        <label class="form-field form-field-wide" for="note-content">
+                            <span>Content</span>
+                            <textarea id="note-content" name="content" rows="5" required></textarea>
+                        </label>
+                        <label class="form-field" for="note-project">
+                            <span>Project (optional)</span>
+                            <select id="note-project" name="projectId">
+                                <option value="">No project</option>
+                            </select>
+                        </label>
+                    </div>
+                    <div class="form-actions">
+                        <button class="secondary-button" id="cancel-note-button" type="button">Cancel</button>
+                        <button class="primary-button" id="save-note-button" type="submit">Save Note</button>
+                    </div>
+                </form>
+
+                <div class="notes-container" id="notes-container"></div>
             </section>
         </main>
     </div>
