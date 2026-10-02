@@ -62,6 +62,16 @@ const cancelNoteButton = document.querySelector("#cancel-note-button");
 const saveNoteButton = document.querySelector("#save-note-button");
 const noteSearchInput = document.querySelector("#note-search");
 const notesContainer = document.querySelector("#notes-container");
+const dashboardTotalProjects = document.querySelector("#dashboard-total-projects");
+const dashboardActiveProjects = document.querySelector("#dashboard-active-projects");
+const dashboardTotalTasks = document.querySelector("#dashboard-total-tasks");
+const dashboardCompletedTasks = document.querySelector("#dashboard-completed-tasks");
+const dashboardTaskCompletion = document.querySelector("#dashboard-task-completion");
+const dashboardTotalGoals = document.querySelector("#dashboard-total-goals");
+const dashboardCompletedGoals = document.querySelector("#dashboard-completed-goals");
+const dashboardProjectProgress = document.querySelector("#dashboard-project-progress");
+const dashboardUpcomingDeadlines = document.querySelector("#dashboard-upcoming-deadlines");
+const dashboardRecentActivity = document.querySelector("#dashboard-recent-activity");
 
 let projects = loadProjects();
 let editingProjectID = null;
@@ -175,6 +185,10 @@ navigationLinks.forEach((link) => {
 		if (link.dataset.view === "notes") {
 			populateNoteProjectOptions();
 			filterNotes();
+		}
+
+		if (link.dataset.view === "dashboard") {
+			renderDashboard();
 		}
 	});
 });
@@ -400,6 +414,178 @@ function calculateProjectProgress(projectId) {
 
 	const completedTasks = projectTasks.filter((task) => task.status === "Done").length;
 	return Math.round((completedTasks / projectTasks.length) * 100);
+}
+
+function renderDashboardEmpty(container, message) {
+	const emptyState = document.createElement("p");
+	emptyState.classList.add("dashboard-empty-state");
+	emptyState.textContent = message;
+	container.append(emptyState);
+}
+
+function normalizeDashboardDate(value) {
+	if (typeof value !== "string" || !value.trim()) {
+		return null;
+	}
+
+	const date = /^\d{4}-\d{2}-\d{2}$/.test(value)
+		? new Date(`${value}T00:00:00`)
+		: new Date(value);
+	if (!Number.isFinite(date.getTime())) {
+		return null;
+	}
+
+	const dateOnly = new Date(date);
+	dateOnly.setHours(0, 0, 0, 0);
+	const today = new Date();
+	today.setHours(0, 0, 0, 0);
+	return dateOnly >= today ? date : null;
+}
+
+function formatDashboardDate(date) {
+	return new Intl.DateTimeFormat(undefined, {
+		month: "short",
+		day: "numeric",
+		year: "numeric"
+	}).format(date);
+}
+
+function renderDashboard() {
+	const activeProjects = projects.filter((project) => project.status === "Active").length;
+	const completedTasks = tasks.filter((task) => task.status === "Done").length;
+	const completedGoals = goals.filter((goal) => goal.status === "Completed").length;
+	const taskCompletion = tasks.length === 0
+		? 0
+		: Math.round((completedTasks / tasks.length) * 100);
+
+	dashboardTotalProjects.textContent = String(projects.length);
+	dashboardActiveProjects.textContent = String(activeProjects);
+	dashboardTotalTasks.textContent = String(tasks.length);
+	dashboardCompletedTasks.textContent = String(completedTasks);
+	dashboardTaskCompletion.textContent = `${taskCompletion}%`;
+	dashboardTotalGoals.textContent = String(goals.length);
+	dashboardCompletedGoals.textContent = String(completedGoals);
+
+	dashboardProjectProgress.replaceChildren();
+	if (projects.length === 0) {
+		renderDashboardEmpty(dashboardProjectProgress, "No projects to track yet.");
+	} else {
+		projects.forEach((project) => {
+			const progress = calculateProjectProgress(project.id);
+			const row = document.createElement("div");
+			row.classList.add("dashboard-project-row");
+			const heading = document.createElement("div");
+		heading.classList.add("dashboard-row-heading");
+			const title = document.createElement("h3");
+			title.textContent = project.name || "Untitled project";
+			const percentage = document.createElement("span");
+			percentage.textContent = `${progress}%`;
+			heading.append(title, percentage);
+
+			const track = document.createElement("div");
+			track.classList.add("dashboard-progress-track");
+			track.setAttribute("role", "progressbar");
+			track.setAttribute("aria-label", `Progress for ${project.name || "project"}`);
+			track.setAttribute("aria-valuemin", "0");
+			track.setAttribute("aria-valuemax", "100");
+			track.setAttribute("aria-valuenow", String(progress));
+			const bar = document.createElement("span");
+			bar.style.width = `${progress}%`;
+			track.append(bar);
+			row.append(heading, track);
+			dashboardProjectProgress.append(row);
+		});
+	}
+
+	const deadlines = [];
+	const addDeadline = (value, type, title, projectName = "") => {
+		const date = normalizeDashboardDate(value);
+		if (date) {
+			deadlines.push({ date, type, title, projectName });
+		}
+	};
+
+	projects.forEach((project) => addDeadline(project.deadline, "Project", project.name));
+	tasks.forEach((task) => {
+		const project = projects.find((item) => item.id === task.projectId);
+		addDeadline(task.dueDate, "Task", task.title, project?.name || "");
+	});
+	goals.forEach((goal) => addDeadline(goal.targetDate, "Learning Goal", goal.title));
+	deadlines.sort((leftDeadline, rightDeadline) => leftDeadline.date - rightDeadline.date);
+
+	dashboardUpcomingDeadlines.replaceChildren();
+	const upcomingDeadlines = deadlines.slice(0, 5);
+	if (upcomingDeadlines.length === 0) {
+		renderDashboardEmpty(dashboardUpcomingDeadlines, "No upcoming deadlines.");
+	} else {
+		upcomingDeadlines.forEach((deadline) => {
+			const row = document.createElement("article");
+			row.classList.add("dashboard-list-row");
+			const details = document.createElement("div");
+			const type = document.createElement("span");
+			type.classList.add("dashboard-type-label");
+			type.textContent = deadline.type;
+			const title = document.createElement("h3");
+			title.textContent = deadline.title || `Untitled ${deadline.type.toLowerCase()}`;
+			details.append(type, title);
+			if (deadline.projectName) {
+				const projectName = document.createElement("p");
+				projectName.textContent = `Project: ${deadline.projectName}`;
+				details.append(projectName);
+			}
+			const date = document.createElement("time");
+			date.dateTime = deadline.date.toISOString();
+			date.textContent = formatDashboardDate(deadline.date);
+			row.append(details, date);
+			dashboardUpcomingDeadlines.append(row);
+		});
+	}
+
+	const activities = [];
+	const addActivity = (records, type, getTitle) => {
+		records.forEach((record) => {
+			const createdAt = new Date(record.createdAt);
+			if (Number.isFinite(createdAt.getTime())) {
+				activities.push({ type, action: "Created", title: getTitle(record), date: createdAt });
+			}
+
+			if (record.updatedAt) {
+				const updatedAt = new Date(record.updatedAt);
+				if (Number.isFinite(updatedAt.getTime()) && updatedAt.getTime() !== createdAt.getTime()) {
+					activities.push({ type, action: "Updated", title: getTitle(record), date: updatedAt });
+				}
+			}
+		});
+	};
+
+	addActivity(projects, "Project", (project) => project.name || "Untitled project");
+	addActivity(tasks, "Task", (task) => task.title || "Untitled task");
+	addActivity(goals, "Learning Goal", (goal) => goal.title || "Untitled goal");
+	addActivity(notes, "Note", (note) => note.title || "Untitled note");
+	activities.sort((leftActivity, rightActivity) => rightActivity.date - leftActivity.date);
+
+	dashboardRecentActivity.replaceChildren();
+	const recentActivities = activities.slice(0, 5);
+	if (recentActivities.length === 0) {
+		renderDashboardEmpty(dashboardRecentActivity, "No recent activity yet.");
+	} else {
+		recentActivities.forEach((activity) => {
+			const row = document.createElement("article");
+			row.classList.add("dashboard-list-row");
+			const details = document.createElement("div");
+			const type = document.createElement("span");
+			type.classList.add("dashboard-type-label");
+			type.textContent = activity.type;
+			const title = document.createElement("h3");
+			title.textContent = `${activity.action}: ${activity.title}`;
+			details.append(type, title);
+			const date = document.createElement("time");
+			date.dateTime = activity.date.toISOString();
+			date.textContent = formatDashboardDate(activity.date);
+			row.append(details, date);
+			dashboardRecentActivity.append(row);
+		});
+	}
 }
 
 function populateTaskProjectOptions() {
@@ -1258,3 +1444,4 @@ filterProjects();
 filterGoals();
 populateNoteProjectOptions();
 filterNotes();
+renderDashboard();

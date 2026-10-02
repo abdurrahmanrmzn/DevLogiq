@@ -64,31 +64,91 @@
                     <button class="icon-button notification-button" type="button" aria-label="Notifications">
                         ♧<span class="notification-dot" aria-hidden="true"></span>
                     </button>
-                    <span class="topbar-avatar" aria-hidden="true">JD</span>
                 </div>
                 </header>
 
                 <section class="welcome-panel" aria-labelledby="welcome-title">
-                <div>
-                    <p class="section-kicker">Your workspace</p>
-                    <h2 id="welcome-title">Good morning, Jordan<span class="accent-dot">.</span></h2>
-                    <p class="welcome-copy">Keep your ideas clear, your work moving, and your goals within reach.</p>
-                </div>
+                    <div>
+                        <p class="section-kicker">Your workspace</p>
+
+                        <h2 id="welcome-title">
+                            Stay organized. Keep building<span class="accent-dot">.</span>
+                        </h2>
+
+                        <p class="welcome-copy">
+                            Manage your projects, tasks, learning goals, and notes in one place.
+                        </p>
+                    </div>
+
+                    <div class="welcome-decoration" aria-hidden="true">
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                    </div>
                 </section>
 
-                <section class="section-heading" aria-labelledby="overview-title">
-                <div>
-                    <p class="section-kicker">Overview</p>
-                    <h2 id="overview-title">Your focus, at a glance</h2>
-                </div>
-                <button class="date-button" type="button">This week <span aria-hidden="true">⌄</span></button>
+                <section class="dashboard-stats" aria-label="Workspace statistics">
+                    <article class="dashboard-stat">
+                        <h3>Total Projects</h3>
+                        <p id="dashboard-total-projects">0</p>
+                    </article>
+                    <article class="dashboard-stat">
+                        <h3>Active Projects</h3>
+                        <p id="dashboard-active-projects">0</p>
+                    </article>
+                    <article class="dashboard-stat">
+                        <h3>Total Tasks</h3>
+                        <p id="dashboard-total-tasks">0</p>
+                    </article>
+                    <article class="dashboard-stat">
+                        <h3>Completed Tasks</h3>
+                        <p id="dashboard-completed-tasks">0</p>
+                    </article>
+                    <article class="dashboard-stat">
+                        <h3>Task Completion</h3>
+                        <p id="dashboard-task-completion">0%</p>
+                    </article>
+                    <article class="dashboard-stat">
+                        <h3>Total Learning Goals</h3>
+                        <p id="dashboard-total-goals">0</p>
+                    </article>
+                    <article class="dashboard-stat">
+                        <h3>Completed Learning Goals</h3>
+                        <p id="dashboard-completed-goals">0</p>
+                    </article>
                 </section>
 
-                <section class="empty-overview" aria-label="Dashboard overview placeholder">
-                <div class="empty-icon" aria-hidden="true">✦</div>
-                <h3>Your dashboard is ready</h3>
-                <p>Stats, activity, and progress will appear here as you build your workspace.</p>
+                <section class="dashboard-section" aria-labelledby="dashboard-project-progress-title">
+                    <header class="dashboard-section-heading">
+                        <div>
+                            <p class="section-kicker">Projects</p>
+                            <h2 id="dashboard-project-progress-title">Project Progress</h2>
+                        </div>
+                    </header>
+                    <div class="dashboard-project-progress" id="dashboard-project-progress"></div>
                 </section>
+
+                <div class="dashboard-detail-grid">
+                    <section class="dashboard-section" aria-labelledby="dashboard-deadlines-title">
+                        <header class="dashboard-section-heading">
+                            <div>
+                                <p class="section-kicker">Coming up</p>
+                                <h2 id="dashboard-deadlines-title">Upcoming Deadlines</h2>
+                            </div>
+                        </header>
+                        <div class="dashboard-list" id="dashboard-upcoming-deadlines"></div>
+                    </section>
+
+                    <section class="dashboard-section" aria-labelledby="dashboard-activity-title">
+                        <header class="dashboard-section-heading">
+                            <div>
+                                <p class="section-kicker">Latest changes</p>
+                                <h2 id="dashboard-activity-title">Recent Activity</h2>
+                            </div>
+                        </header>
+                        <div class="dashboard-list" id="dashboard-recent-activity"></div>
+                    </section>
+                </div>
             </section>
 
             <section id="projects" class="view-section projects-view" aria-labelledby="projects-title" hidden>
