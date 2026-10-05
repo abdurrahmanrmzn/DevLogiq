@@ -441,6 +441,10 @@ a {
 	font-size: 21px;
 }
 
+.dashboard-search-decoration {
+	cursor: default;
+}
+
 .notification-button {
 	font-size: 17px;
 }

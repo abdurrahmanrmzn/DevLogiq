@@ -150,12 +150,45 @@ function setSettingsStatus(message, isError = false) {
 }
 
 function validateImportedData(data) {
-	if (!data || typeof data !== "object") {
+	if (!data || typeof data !== "object" || Array.isArray(data)) {
 		return false;
 	}
 
-	const requiredCollections = ["projects", "tasks", "goals", "notes"];
-	return requiredCollections.every((collectionName) => Array.isArray(data[collectionName]));
+	const hasUsableId = (record) =>
+		record !== null &&
+		typeof record === "object" &&
+		!Array.isArray(record) &&
+		typeof record.id === "string" &&
+		record.id.trim().length > 0;
+	const hasOptionalString = (record, fieldName) =>
+		record[fieldName] === undefined || record[fieldName] === null || typeof record[fieldName] === "string";
+	const hasOptionalProjectId = (record) =>
+		record.projectId === undefined || record.projectId === null || typeof record.projectId === "string";
+
+	return Array.isArray(data.projects) && data.projects.every((project) =>
+		hasUsableId(project) &&
+		typeof project.name === "string" &&
+		hasOptionalString(project, "deadline") &&
+		(project.technologies === undefined || project.technologies === null ||
+			typeof project.technologies === "string" || Array.isArray(project.technologies))
+	) && Array.isArray(data.tasks) && data.tasks.every((task) =>
+		hasUsableId(task) &&
+		typeof task.title === "string" &&
+		hasOptionalString(task, "dueDate") &&
+		hasOptionalProjectId(task)
+	) && Array.isArray(data.goals) && data.goals.every((goal) =>
+		hasUsableId(goal) &&
+		typeof goal.title === "string" &&
+		typeof goal.category === "string" &&
+		(goal.progress === undefined || goal.progress === null ||
+			((typeof goal.progress === "number" || typeof goal.progress === "string") &&
+				Number.isFinite(Number(goal.progress))))
+	) && Array.isArray(data.notes) && data.notes.every((note) =>
+		hasUsableId(note) &&
+		typeof note.title === "string" &&
+		typeof note.content === "string" &&
+		hasOptionalProjectId(note)
+	);
 }
 
 function applyImportedData(data) {
@@ -178,6 +211,7 @@ function applyImportedData(data) {
 	populateTaskProjectOptions();
 	filterTasks();
 	filterProjects();
+	updateGoalCategoryOptions();
 	filterGoals();
 	populateNoteProjectOptions();
 	filterNotes();
@@ -234,6 +268,7 @@ function clearApplicationData() {
 	populateTaskProjectOptions();
 	filterTasks();
 	filterProjects();
+	updateGoalCategoryOptions();
 	filterGoals();
 	populateNoteProjectOptions();
 	filterNotes();
@@ -321,6 +356,7 @@ navigationLinks.forEach((link) => {
 		}
 
 		if (link.dataset.view === "goals") {
+			updateGoalCategoryOptions();
 			filterGoals();
 		}
 
@@ -1034,7 +1070,6 @@ function updateGoalCategoryOptions() {
 }
 
 function filterGoals() {
-	updateGoalCategoryOptions();
 	const searchTerm = goalSearchInput.value.trim().toLowerCase();
 	const selectedStatus = goalStatusFilter.value;
 	const selectedCategory = goalCategoryFilter.value;
@@ -1227,6 +1262,7 @@ function deleteGoal(goalId) {
 
 	goals = goals.filter((goal) => goal.id !== goalId);
 	saveGoals(goals);
+	updateGoalCategoryOptions();
 	filterGoals();
 }
 
@@ -1437,6 +1473,7 @@ goalForm.addEventListener("submit", (event) => {
 	}
 
 	saveGoals(goals);
+	updateGoalCategoryOptions();
 	filterGoals();
 	resetGoalForm();
 	goalForm.hidden = true;
@@ -1580,6 +1617,7 @@ initializeTheme();
 populateTaskProjectOptions();
 filterTasks();
 filterProjects();
+updateGoalCategoryOptions();
 filterGoals();
 populateNoteProjectOptions();
 filterNotes();
