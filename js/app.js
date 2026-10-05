@@ -1,4 +1,4 @@
-import { saveProjects, loadProjects, saveTasks, loadTasks, saveGoals, loadGoals, saveNotes, loadNotes } from "./data/storage.js";
+import { saveProjects, loadProjects, saveTasks, loadTasks, saveGoals, loadGoals, saveNotes, loadNotes, saveSettings, loadSettings, clearAppData } from "./data/storage.js";
 
 const navigationLinks = document.querySelectorAll("[data-view]");
 const viewSections = document.querySelectorAll(".view-section");
@@ -62,6 +62,12 @@ const cancelNoteButton = document.querySelector("#cancel-note-button");
 const saveNoteButton = document.querySelector("#save-note-button");
 const noteSearchInput = document.querySelector("#note-search");
 const notesContainer = document.querySelector("#notes-container");
+const themeRadios = document.querySelectorAll('input[name="theme"]');
+const exportDataButton = document.querySelector("#export-data-button");
+const importDataButton = document.querySelector("#import-data-button");
+const clearAllDataButton = document.querySelector("#clear-all-data-button");
+const importDataInput = document.querySelector("#import-data-input");
+const settingsStatus = document.querySelector("#settings-status");
 const dashboardTotalProjects = document.querySelector("#dashboard-total-projects");
 const dashboardActiveProjects = document.querySelector("#dashboard-active-projects");
 const dashboardTotalTasks = document.querySelector("#dashboard-total-tasks");
@@ -98,6 +104,144 @@ if (goals.length !== storedGoals.length) {
 }
 let notes = loadNotes().filter((note) => note && typeof note === "object");
 let editingNoteId = null;
+
+function applyTheme(themeName) {
+	const nextTheme = themeName === "dark" ? "dark" : "light";
+	document.body.dataset.theme = nextTheme;
+
+	themeRadios.forEach((radio) => {
+		radio.checked = radio.value === nextTheme;
+	});
+
+	saveSettings({ theme: nextTheme });
+}
+
+function initializeTheme() {
+	const settings = loadSettings();
+	applyTheme(settings.theme);
+}
+
+function exportAllData() {
+	const exportPayload = {
+		version: 1,
+		exportedAt: new Date().toISOString(),
+		projects,
+		tasks,
+		goals,
+		notes,
+		settings: loadSettings()
+	};
+
+	const fileBlob = new Blob([JSON.stringify(exportPayload, null, 2)], {
+		type: "application/json"
+	});
+	const fileUrl = URL.createObjectURL(fileBlob);
+	const downloadLink = document.createElement("a");
+	downloadLink.href = fileUrl;
+	downloadLink.download = `devlogiq-backup-${new Date().toISOString().slice(0, 10)}.json`;
+	document.body.append(downloadLink);
+	downloadLink.click();
+	downloadLink.remove();
+	URL.revokeObjectURL(fileUrl);
+}
+
+function setSettingsStatus(message, isError = false) {
+	settingsStatus.hidden = false;
+	settingsStatus.textContent = message;
+	settingsStatus.classList.toggle("error", isError);
+}
+
+function validateImportedData(data) {
+	if (!data || typeof data !== "object") {
+		return false;
+	}
+
+	const requiredCollections = ["projects", "tasks", "goals", "notes"];
+	return requiredCollections.every((collectionName) => Array.isArray(data[collectionName]));
+}
+
+function applyImportedData(data) {
+	projects = Array.isArray(data.projects) ? data.projects : [];
+	tasks = Array.isArray(data.tasks) ? data.tasks : [];
+	goals = Array.isArray(data.goals) ? data.goals : [];
+	notes = Array.isArray(data.notes) ? data.notes : [];
+
+	saveProjects(projects);
+	saveTasks(tasks);
+	saveGoals(goals);
+	saveNotes(notes);
+
+	const importedSettings = data.settings && typeof data.settings === "object"
+		? data.settings
+		: { theme: "light" };
+	const nextSettings = saveSettings({ theme: importedSettings.theme === "dark" ? "dark" : "light" });
+	applyTheme(nextSettings.theme);
+
+	populateTaskProjectOptions();
+	filterTasks();
+	filterProjects();
+	filterGoals();
+	populateNoteProjectOptions();
+	filterNotes();
+	renderDashboard();
+}
+
+function importAllData(event) {
+	const file = event.target.files && event.target.files[0];
+	if (!file) {
+		return;
+	}
+
+	const reader = new FileReader();
+	reader.onload = () => {
+		try {
+			const parsedData = JSON.parse(String(reader.result));
+			if (!validateImportedData(parsedData)) {
+				setSettingsStatus("Invalid backup file. Please choose a valid DevLogiq JSON backup.", true);
+				return;
+			}
+
+			applyImportedData(parsedData);
+			setSettingsStatus("Data imported successfully.");
+		} catch {
+			setSettingsStatus("Unable to read that file. Please select a valid JSON backup.", true);
+		} finally {
+			event.target.value = "";
+		}
+	};
+	reader.readAsText(file);
+}
+
+function clearApplicationData() {
+	const isConfirmed = window.confirm("This will permanently delete all DevLogiq data, including projects, tasks, goals, notes, and settings. Continue?");
+	if (!isConfirmed) {
+		return;
+	}
+
+	clearAppData();
+	projects = [];
+	tasks = [];
+	goals = [];
+	notes = [];
+	saveSettings({ theme: "light" });
+	applyTheme("light");
+	resetProjectForm();
+	projectForm.hidden = true;
+	resetTaskForm();
+	taskForm.hidden = true;
+	resetGoalForm();
+	goalForm.hidden = true;
+	resetNoteForm();
+	noteForm.hidden = true;
+	populateTaskProjectOptions();
+	filterTasks();
+	filterProjects();
+	filterGoals();
+	populateNoteProjectOptions();
+	filterNotes();
+	renderDashboard();
+	setSettingsStatus("All DevLogiq data cleared.");
+}
 
 function resetProjectForm() {
 	projectForm.reset();
@@ -1438,6 +1582,7 @@ notesContainer.addEventListener("click", (event) => {
 	}
 });
 
+initializeTheme();
 populateTaskProjectOptions();
 filterTasks();
 filterProjects();
@@ -1445,3 +1590,14 @@ filterGoals();
 populateNoteProjectOptions();
 filterNotes();
 renderDashboard();
+
+themeRadios.forEach((radio) => {
+	radio.addEventListener("change", (event) => {
+		applyTheme(event.target.value);
+	});
+});
+
+exportDataButton.addEventListener("click", exportAllData);
+importDataButton.addEventListener("click", () => importDataInput.click());
+importDataInput.addEventListener("change", importAllData);
+clearAllDataButton.addEventListener("click", clearApplicationData);

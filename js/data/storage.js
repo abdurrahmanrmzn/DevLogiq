@@ -68,5 +68,41 @@ function loadNotes() {
     }
 }
 
+function loadSettings() {
+    const settingsJSON = localStorage.getItem("devlogiq_settings");
 
-export { saveProjects, loadProjects, saveTasks, loadTasks, saveGoals, loadGoals, saveNotes, loadNotes };
+    if (!settingsJSON) {
+        return { theme: "light" };
+    }
+
+    try {
+        const settings = JSON.parse(settingsJSON);
+        return {
+            theme: settings && settings.theme === "dark" ? "dark" : "light"
+        };
+    } catch {
+        return { theme: "light" };
+    }
+}
+
+function saveSettings(settings) {
+    const nextSettings = {
+        theme: settings && settings.theme === "dark" ? "dark" : "light"
+    };
+
+    localStorage.setItem("devlogiq_settings", JSON.stringify(nextSettings));
+    return nextSettings;
+}
+
+function clearAppData() {
+    [
+        "devlogiq_projects",
+        "devlogiq_tasks",
+        "devlogiq_goals",
+        "devlogiq_notes",
+        "devlogiq_settings"
+    ].forEach((key) => localStorage.removeItem(key));
+}
+
+
+export { saveProjects, loadProjects, saveTasks, loadTasks, saveGoals, loadGoals, saveNotes, loadNotes, saveSettings, loadSettings, clearAppData };
