@@ -112,8 +112,6 @@ function applyTheme(themeName) {
 	themeRadios.forEach((radio) => {
 		radio.checked = radio.value === nextTheme;
 	});
-
-	saveSettings({ theme: nextTheme });
 }
 
 function initializeTheme() {
@@ -351,12 +349,12 @@ function createProject(project) {
 
 	const newProject = {
 		id: crypto.randomUUID(),
-		name:name,
-		description :description,
-		status:status ,
-		priority:priority,
-		deadline:deadline,
-		technologies:technologiesArray,
+		name,
+		description,
+		status,
+		priority,
+		deadline,
+		technologies: technologiesArray,
 		createdAt: new Date().toISOString()
 	};
 	return newProject;
@@ -1329,14 +1327,11 @@ deleteProjectDetailsButton.addEventListener("click", () => {
 	deleteProject(projectID);
 });
 
-projectForm.addEventListener("submit",(event)=>{
-    event.preventDefault();
+projectForm.addEventListener("submit", (event) => {
+	event.preventDefault();
 
-	
-    const formData = new FormData(projectForm);
-
-    const formProps = Object.fromEntries(formData);
-	
+	const formData = new FormData(projectForm);
+	const formProps = Object.fromEntries(formData);
 
 	if (editingProjectID) {
 		const projectIndex = projects.findIndex((project) => project.id === editingProjectID);
@@ -1356,11 +1351,10 @@ projectForm.addEventListener("submit",(event)=>{
 	}
 
 	saveProjects(projects);
-
 	filterProjects();
-	
 	resetProjectForm();
 });
+
 
 newTaskButton.addEventListener("click", () => {
 	resetTaskForm();
@@ -1528,12 +1522,12 @@ tasksContainer.addEventListener("click", (event) => {
 	}
 });
 
-projectsContainer.addEventListener("click",(event)=>{
+projectsContainer.addEventListener("click", (event) => {
 	const clickedButton = event.target.closest("button");
 
-    if (!clickedButton) {
-        return;
-    }
+	if (!clickedButton) {
+		return;
+	}
 
 	const projectID = clickedButton.dataset.id;
 
@@ -1541,14 +1535,14 @@ projectsContainer.addEventListener("click",(event)=>{
 		viewProject(clickedButton.dataset.projectId);
 	}
 
-    if (clickedButton.classList.contains("project-card-delete")) {
-        deleteProject(projectID);
-    }
+	if (clickedButton.classList.contains("project-card-delete")) {
+		deleteProject(projectID);
+	}
 
-     if (clickedButton.classList.contains("project-card-edit")) {
-        editProject(projectID);
-    }
-})
+	if (clickedButton.classList.contains("project-card-edit")) {
+		editProject(projectID);
+	}
+});
 
 goalsContainer.addEventListener("click", (event) => {
 	const clickedButton = event.target.closest("button");
@@ -1593,7 +1587,9 @@ renderDashboard();
 
 themeRadios.forEach((radio) => {
 	radio.addEventListener("change", (event) => {
-		applyTheme(event.target.value);
+		const nextTheme = event.target.value === "dark" ? "dark" : "light";
+		applyTheme(nextTheme);
+		saveSettings({ theme: nextTheme });
 	});
 });
 
