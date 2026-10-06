@@ -84,6 +84,7 @@ DevLogiq/
 ├── assets/
 ├── .gitignore
 └── README.md
+```
 
 ## Application State
 
