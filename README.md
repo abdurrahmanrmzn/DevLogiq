@@ -84,3 +84,59 @@ DevLogiq/
 ├── assets/
 ├── .gitignore
 └── README.md
+
+## Application State
+
+The application state is managed in `app.js`, while browser persistence is handled through the dedicated `storage.js` module.
+
+## Data Storage
+
+DevLogiq uses the browser's `localStorage` API for client-side data persistence.
+
+The application stores:
+
+- Projects
+- Tasks
+- Learning goals
+- Notes
+- Settings
+
+Users can export their application data as a JSON backup and restore it later through the **Settings** page.
+
+## Project Status
+
+**Version:** `1.0`
+
+DevLogiq v1 provides a complete personal developer workspace with:
+
+- Project management
+- Task tracking
+- Learning goals
+- Technical notes
+- Dashboard analytics
+- Theme customization
+- Data backup and restoration
+
+The current version focuses on client-side functionality and local data persistence.
+
+## Future Improvements
+
+Potential future improvements include:
+
+- Backend integration
+- User authentication
+- Cloud data synchronization
+- Database persistence
+- Collaboration features
+- Advanced analytics
+- GitHub integration
+- Notifications
+- AI-assisted developer workflows
+
+## Author
+
+**Abdur Rahman Ramzan**  
+*Software Engineering Undergraduate*
+
+- **GitHub:** [Abd-rahman-dev](https://github.com/Abd-rahman-dev)
+- **LinkedIn:** [Abdur Rahman Ramzan](https://www.linkedin.com/in/abdurrahman-ramzan)
