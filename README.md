@@ -2,6 +2,10 @@
 
 > A personal developer workspace for managing coding projects, tasks, learning goals, and technical notes.
 
+
+**Live Demo:** https://abdurrahmanmzn.github.io/DevLogiq/  
+**GitHub Repository:** https://github.com/Abd-rahman-dev/DevLogiq
+
 ## Overview
 
 DevLogiq is a lightweight developer workspace built with Vanilla JavaScript.
