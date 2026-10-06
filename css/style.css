@@ -1077,6 +1077,7 @@ a {
 
 .project-card-actions {
 	display: flex;
+	flex-wrap: wrap;
 	gap: 8px;
 	margin-top: auto;
 	padding-top: 13px;
@@ -1084,6 +1085,7 @@ a {
 }
 
 .project-card-actions button {
+	flex: 1 1 auto;
 	min-height: 35px;
 	padding: 0 13px;
 	border: 1px solid transparent;
